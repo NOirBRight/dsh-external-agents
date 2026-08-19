@@ -1,0 +1,4 @@
+export type ExternalAgentsKey = 'nav' | 'title' | 'jobNote' | 'sectionIntro' | 'inUse' | 'setDefault' | 'refresh' | 'enabledBadge' | 'missingBadge' | 'productDefault' | 'model' | 'modelHint' | 'locate' | 'loginManaged' | 'loggedIn' | 'env' | 'envHint' | 'unattended' | 'unattendedAuto' | 'unattendedStrict' | 'unattendedHint' | 'probeMissing' | 'probeFound' | 'docs' | 'save' | 'saved' | 'failed' | 'loading' | 'blurb.codex' | 'blurb.claude-code' | 'blurb.cursor' | 'blurb.antigravity' | 'install.codex' | 'install.claude-code' | 'install.cursor' | 'install.antigravity';
+export declare const zh: Record<ExternalAgentsKey, string>;
+export declare const en: Record<ExternalAgentsKey, string>;
+//# sourceMappingURL=locales.d.ts.map

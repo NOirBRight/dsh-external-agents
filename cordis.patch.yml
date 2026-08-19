@@ -1,0 +1,18 @@
+# Host-plane control plane. Official Product Worker providers are mounted
+# from apply() (they live in this package's node_modules; a linked checkout
+# is not hoisted into the profile). Loading them does not start a product
+# process. Delegation tools appear only when this config enables the Adapter.
+- insert:
+    - id: external-agents
+      name: dsh-external-agents
+      config:
+        adapters:
+          codex:
+            enabled: true
+          claude-code:
+            enabled: true
+          cursor:
+            enabled: true
+          antigravity:
+            enabled: true
+        defaultAdapter: codex
