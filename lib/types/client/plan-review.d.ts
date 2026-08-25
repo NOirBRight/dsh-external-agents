@@ -1,6 +1,7 @@
 /** Plan-review narrowing plus the fail-closed external handoff capability seam. */
 import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client';
-import type { AdapterId } from '../catalog.ts';
+import { type AdapterId } from '../catalog.ts';
+import type { PlanExternalAgentTarget, PlanTargetId } from '../client-contract.ts';
 export interface PlanReviewOption {
     label: string;
     description?: string;
@@ -29,16 +30,6 @@ interface ComposerOwner {
 }
 export declare function planReviewOf(questions: readonly QuestionItem[]): PlanReview | undefined;
 export declare function selectPlanReview(owner: ComposerOwner): QuestionWaitLike | null;
-export declare function planHandoffAvailability(): {
-    available: false;
-    reasonKey: "plan.externalUnavailable";
-};
-export interface DisabledPlanWorker {
-    id: AdapterId;
-    label: string;
-    description: string;
-    disabled: true;
-}
 export declare function disabledPlanWorkers(snapshot: {
     catalog: readonly {
         id: AdapterId;
@@ -56,26 +47,6 @@ export declare function disabledPlanWorkers(snapshot: {
     productOf: (id: AdapterId) => string;
     missingLabel: string;
     unavailableLabel: string;
-}): DisabledPlanWorker[];
-export declare function selectPlanTarget(target: string): 'dsh' | null;
-export type PrepareHandoffResult = {
-    state: 'prepared';
-    token: string;
-} | {
-    state: 'submitted';
-    jobId: string;
-};
-export type CommitHandoffResult = {
-    state: 'submitted';
-    jobId: string;
-};
-/** Fail closed before any pending-question response or Product Worker side effect. */
-export declare function approveDshPlan(commit: (() => Promise<boolean>) | null, respond: () => Promise<void>): Promise<boolean>;
-export declare function handoffPlan(_args: {
-    prepare: () => Promise<PrepareHandoffResult>;
-    cancel: () => Promise<void>;
-    commit: (token: string) => Promise<CommitHandoffResult>;
-    remember?: (token: string) => void;
-}): Promise<CommitHandoffResult>;
+}): PlanExternalAgentTarget[];
+export declare function selectPlanTarget(target: string): PlanTargetId | null;
 export {};
-//# sourceMappingURL=plan-review.d.ts.map

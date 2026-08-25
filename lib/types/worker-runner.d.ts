@@ -17,4 +17,3 @@ export type ForegroundWorkerResult = {
 export declare function outputValueText(values: JsonValue[]): string;
 export declare function startForegroundProductWorker(ctx: Context, request: ProductWorkerRequest, signal: AbortSignal): Promise<ForegroundWorkerResult>;
 export declare function startBackgroundProductWorker(ctx: Context, request: ProductWorkerRequest): string;
-//# sourceMappingURL=worker-runner.d.ts.map

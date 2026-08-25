@@ -1,8 +1,8 @@
 /** Plan-review narrowing plus the fail-closed external handoff capability seam. */
 
 import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client'
-import type { AdapterId } from '../catalog.ts'
-import { EXTERNAL_PLAN_HANDOFF_UNAVAILABLE } from '../client-contract.ts'
+import { ADAPTER_IDS, type AdapterId } from '../catalog.ts'
+import type { PlanExternalAgentTarget, PlanTargetId } from '../client-contract.ts'
 
 export interface PlanReviewOption { label: string; description?: string }
 export interface PlanReview {
@@ -46,17 +46,6 @@ export function selectPlanReview(owner: ComposerOwner): QuestionWaitLike | null 
   return wait === undefined || planReviewOf(wait.payload.questions) === undefined ? null : wait
 }
 
-export function planHandoffAvailability() {
-  return { available: false as const, reasonKey: 'plan.externalUnavailable' as const }
-}
-
-export interface DisabledPlanWorker {
-  id: AdapterId
-  label: string
-  description: string
-  disabled: true
-}
-
 export function disabledPlanWorkers(
   snapshot: {
     catalog: readonly { id: AdapterId }[]
@@ -69,11 +58,10 @@ export function disabledPlanWorkers(
     missingLabel: string
     unavailableLabel: string
   },
-): DisabledPlanWorker[] {
-  return snapshot.catalog
-    .filter(row => snapshot.config.adapters?.[row.id]?.enabled !== false)
-    .map((row) => ({
-      id: row.id,
+): PlanExternalAgentTarget[] {
+  return snapshot.catalog.map((row) => ({
+      id: `external-agent:${row.id}`,
+      adapterId: row.id,
       label: copy.labelOf(row.id),
       description: (snapshot.probes[row.id]?.found === false ? copy.missingLabel : copy.productOf(row.id))
         + ' · ' + copy.unavailableLabel,
@@ -81,28 +69,9 @@ export function disabledPlanWorkers(
     }))
 }
 
-export function selectPlanTarget(target: string): 'dsh' | null {
-  return target === 'dsh' ? 'dsh' : null
-}
-
-export type PrepareHandoffResult = { state: 'prepared', token: string } | { state: 'submitted', jobId: string }
-export type CommitHandoffResult = { state: 'submitted', jobId: string }
-
-/** Fail closed before any pending-question response or Product Worker side effect. */
-export async function approveDshPlan(
-  commit: (() => Promise<boolean>) | null,
-  respond: () => Promise<void>,
-): Promise<boolean> {
-  if (commit !== null && !await commit()) return false
-  await respond()
-  return true
-}
-
-export async function handoffPlan(_args: {
-  prepare: () => Promise<PrepareHandoffResult>
-  cancel: () => Promise<void>
-  commit: (token: string) => Promise<CommitHandoffResult>
-  remember?: (token: string) => void
-}): Promise<CommitHandoffResult> {
-  throw new Error(EXTERNAL_PLAN_HANDOFF_UNAVAILABLE)
+export function selectPlanTarget(target: string): PlanTargetId | null {
+  if (target === 'dsh') return target
+  if (!target.startsWith('external-agent:')) return null
+  const adapter = target.slice('external-agent:'.length)
+  return ADAPTER_IDS.includes(adapter as AdapterId) ? target as PlanTargetId : null
 }

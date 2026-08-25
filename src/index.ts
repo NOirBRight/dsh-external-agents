@@ -25,13 +25,18 @@ export { ADAPTERS, ADAPTER_IDS, GENERIC_TOOL_NAME, OFFICIAL_ADAPTER_IDS } from '
 export { resolveDelegationTarget, resolveExposure } from './exposure.ts'
 export type { AdapterConfig, Exposure, NamedToolExposure } from './exposure.ts'
 export {
+  CONTINUE_IN_DSH_SLOT,
   EXTERNAL_AGENTS_RPC_CHANNEL,
+  EXTERNAL_PLAN_HANDOFF_UNAVAILABLE,
   PICK_ENDPOINT,
   PLAN_COMMIT_ENDPOINT,
   PLAN_PREPARE_ENDPOINT,
   PROBE_ENDPOINT,
   SAVE_ENDPOINT,
   SNAPSHOT_ENDPOINT,
+} from './client-contract.ts'
+export type {
+  ContinueInDshOwner, ExternalAgentPlanTargetId, PlanExternalAgentTarget, PlanTargetId,
 } from './client-contract.ts'
 
 export const name = 'external-agents'

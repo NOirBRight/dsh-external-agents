@@ -13,4 +13,3 @@ export declare const PROBES_FILE_NAME = "external-agents.probes.json";
 export declare function probesFilePath(home: string, profile?: string): string;
 export declare function loadPersistedProbes(home: string, profile?: string): Partial<Record<AdapterId, AdapterProbe>>;
 export declare function savePersistedProbes(home: string, probes: Partial<Record<AdapterId, AdapterProbe>>, profile?: string): void;
-//# sourceMappingURL=store.d.ts.map

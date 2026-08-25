@@ -26,4 +26,3 @@ export declare const antigravityPlugin: {
     inject: string[];
     apply: typeof applyAntigravityProvider;
 };
-//# sourceMappingURL=print-json-provider.d.ts.map

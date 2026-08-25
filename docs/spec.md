@@ -178,6 +178,12 @@ dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
 
 取消必须拆掉产品进程树。已改的文件不回滚。
 
+### 11.1 rc.2 Plan Review 限制
+
+官方 DSH 0.1.1-rc.2 只能回答或取消 pending Plan 问题，没有外部交接结果，也没有原子“选择执行模型 + 回答 Plan”seam。因此 Plan Review 中的外部 Agent 目标只显示为不可用；既有 `plan.prepare` / `plan.commit` 名称仅作为兼容入口保留并始终返回 fail-closed 错误，不暴露可执行的 prepare/cancel/commit handoff 能力。
+
+`dsh-composer-picker` v0.1.3 可通过包根公开的 `external-agents.plan-review.continue-in-dsh` slot 组合渲染。Picker 子项拥有 `ModelSelection` 草稿和官方 `ModelDirectory` 提交，并通过 plugin-owned `registerCommit` seam 向顶层 owner 注册一次提交动作；External Agents 只负责编排“Composer 提交模型 → 回答 Plan”。提交失败不回答并允许重试。无 Picker 时沿用当前 DSH 模型。多个客户端仍可在提交与回答之间竞争同一问题：以官方 response receipt 为准；批准后的显式拒绝显示本地化终态错误，transport 异常保持可重试。本插件不声称两步具有原子性。
+
 ## 12. 非目标（v1）
 
 - 续聊、`--resume`、把产品 session id 交给父模型

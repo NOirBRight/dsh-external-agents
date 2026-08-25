@@ -1,12 +1,11 @@
 /** Browser half: External Agents page inside Settings. */
 
-import { createElement } from 'react'
 import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
 import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import type { PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
+
 import {
   EXTERNAL_AGENTS_RPC_CHANNEL,
   PICK_ENDPOINT,
@@ -19,13 +18,13 @@ import type { AdapterId } from '../catalog.ts'
 import type { AdapterProbe } from '../client-contract.ts'
 import { decodeConfig } from '../config-codec.ts'
 import { ExternalAgentsSection } from './ExternalAgentsSection.tsx'
-import { CONTINUE_IN_DSH_SLOT, ExternalPlanReviewCard } from './ExternalPlanReviewCard.tsx'
+import { CONTINUE_IN_DSH_SLOT, ExternalPlanReviewCard, type ExternalPlanReviewFace } from './ExternalPlanReviewCard.tsx'
 import { selectPlanReview } from './plan-review.ts'
 import type { ExternalAgentsFace } from './ExternalAgentsSection.tsx'
 import { en, zh, type ExternalAgentsKey } from './locales.ts'
 
 export { CONTINUE_IN_DSH_SLOT } from './ExternalPlanReviewCard.tsx'
-export type { ContinueInDshOwner, PlanWorkerTarget } from './ExternalPlanReviewCard.tsx'
+export type { ContinueInDshOwner, PlanExternalAgentTarget, PlanTargetId, PlanWorkerTarget } from './ExternalPlanReviewCard.tsx'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -79,27 +78,18 @@ export function apply(ctx: ClientContext): void {
     if (!result.ok) throw new Error(result.error.message)
   }
 
-  function PlanSeat(
-    props: PropsRuntime<'conversation.composer'>
-      & PropsRenderSlots<typeof CONTINUE_IN_DSH_SLOT>
-      & PropsLocale<'settings.external-agents'>
-      & { matched: ReturnType<typeof selectPlanReview> },
-  ) {
-    if (props.matched === null) return null
-    return createElement(ExternalPlanReviewCard, {
-      ...props, key: props.matched.key, matched: props.matched, load: loadPlanTargets,
-    })
-  }
-
-  ctx.slots.inject('conversation.composer', () => ctx.slots.register({
-    name: 'conversation.composer',
-    locale: localeNamespace,
-    priority: -6,
-    select: (owner: ComposerChainProps) => selectPlanReview(owner),
-    children: {
-      [CONTINUE_IN_DSH_SLOT]: { kind: 'single', scope: 'session' },
-    },
-  }, PlanSeat))
+  ctx.inject(['slots'], (scope: ClientContext) => {
+    scope.slots.inject('conversation.composer', () => scope.slots.register({
+      name: 'conversation.composer',
+      locale: localeNamespace,
+      priority: -6,
+      select: (owner: ComposerChainProps) => selectPlanReview(owner),
+      children: {
+        [CONTINUE_IN_DSH_SLOT]: { kind: 'single', scope: 'session' },
+      },
+      inject: (): ExternalPlanReviewFace => ({ loadTargets: loadPlanTargets }),
+    }, ExternalPlanReviewCard))
+  })
 
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',

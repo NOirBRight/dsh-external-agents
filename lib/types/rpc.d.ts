@@ -11,4 +11,3 @@ export interface ExternalAgentsRpcDeps {
 }
 export declare function createExternalAgentsRpcHandler(deps: ExternalAgentsRpcDeps): ConnectionRpcHandler;
 export declare function registerExternalAgentsRpc(ctx: Context, deps: ExternalAgentsRpcDeps): void;
-//# sourceMappingURL=rpc.d.ts.map

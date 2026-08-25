@@ -19,4 +19,3 @@ export declare function interpretPrintJson(input: {
     readonly stdout: string;
     readonly stderr: string;
 }): PrintJsonOutcome;
-//# sourceMappingURL=print-json-result.d.ts.map

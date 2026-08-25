@@ -14,4 +14,3 @@ export interface ExternalAgentsFace {
 }
 export type ExternalAgentsSectionProps = PropsRuntime<'settings.section'> & InjectFace<ExternalAgentsFace>;
 export declare function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.Element;
-//# sourceMappingURL=ExternalAgentsSection.d.ts.map

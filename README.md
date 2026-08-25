@@ -1,6 +1,6 @@
 # dsh-external-agents
 
-DeepSeek Harness 的 **外部 Agent（Product Worker）控制面**：让本机已安装的 Codex、Claude Code、Cursor Agent、Antigravity CLI 当一次性工人，并在设置里被发现、启用、设默认。
+DeepSeek Harness 的 **外部 Agent（Product Worker）控制面**：让本机已安装的 Codex、Claude Code、Cursor Agent、Antigravity CLI 作为一次性外部 Agent，并在设置里被发现、启用、设默认。
 
 先读：
 
@@ -13,7 +13,7 @@ DeepSeek Harness 的 **外部 Agent（Product Worker）控制面**：让本机�
 
 ## 一句话
 
-DSH 继续当编排器；第三方产品继续当工人；设置页让人看得到工人；Job Panel 让人看得到活。
+DSH 继续当编排器；第三方产品作为外部 Agent；设置页展示外部 Agent；Job Panel 展示后台任务。
 
 ## 不是什么
 
@@ -29,15 +29,17 @@ P0–P3 已在 lab 接线。技能 `delegate-product-worker` 只路由、不 spa
 
 ## Plan 执行路由
 
-在干净的官方 DSH 0.1.1-rc.2 上，Plan Review 没有公开、安全的外部交接 seam。本插件因此失败关闭：外部 Agent 目标会显示但不可选，不会 prepare、回答或取消 Plan 问题、commit，也不会启动 Worker。继续在 DSH 执行仍走官方批准答案；设置、探测、普通前台/后台委托和 Jobs 不受影响。
+在干净的官方 DSH 0.1.1-rc.2 上，Plan Review 没有公开、安全的外部交接 seam。本插件因此失败关闭：外部 Agent 目标会显示但不可选，不回答或取消 Plan 问题，也不启动外部 Agent。既有 `plan.prepare` / `plan.commit` 名称仅为兼容保留并始终返回 fail-closed 错误。继续在 DSH 执行仍走官方批准答案；设置、探测、普通前台/后台委托和 Jobs 不受影响。
 
-与 `dsh-composer-picker` 双装时，本插件仍以 priority `-6` 拥有顶层 `conversation.composer` 路由卡，并保留插件拥有的 `external-agents.plan-review.continue-in-dsh` child slot。picker 可以继续接入 DSH 执行模型选择；本插件单装时 Continue in DSH 使用当前模型。
+与 `dsh-composer-picker` v0.1.3 双装时，本插件以 priority `-6` 拥有顶层 `conversation.composer` 路由卡，并从包根导出插件拥有的 `external-agents.plan-review.continue-in-dsh` child-slot 契约。Composer 子项拥有 `ModelSelection` 草稿和官方 `ModelDirectory` 提交，并通过 plugin-owned `registerCommit` seam 注册执行提交；External Agents 只编排“Composer 提交模型 → 回答 Plan”。提交失败保留 Plan 并允许重试；无 Picker 时沿用当前 DSH 模型。rc.2 没有原子“选模型并回答”seam：若另一客户端在两步之间结算问题，模型切换无法由插件回滚；批准后的显式拒绝成为本地终态，transport 异常保持可重试。
 
 完整 shadow `exit_plan_mode` 当前未获 ADR 授权，不实现。未来只有 Core 提供公开、可验证的 delegated Plan resolution seam，或另开 ADR 批准 shadow 方案后，才恢复外部 Plan 交接。见 [ADR 0007](docs/adr/0007-plan-handoff-fails-closed.md)。
 
 ## 安装（dsh-lab）
 
 本机验收装进 **dsh-lab**（`DSH_HOME=~/.dsh-lab`，GUI `http://127.0.0.1:3082`），不要改正在跑的 dsh-web。
+
+标准 `pnpm check` 可在本插件的独立 checkout 中完成 build、test 与 pack gate。发布矩阵另运行 `pnpm compat:check`，打包并组合加载本插件与 composer-picker；默认从相邻的 `../dsh-composer-picker` 读取兼容 checkout，工作区布局不同时用 `DSH_COMPOSER_PICKER_REPO=/absolute/path/to/dsh-composer-picker pnpm compat:check` 指定。该路径只用于跨包验证，不会加入运行时依赖。
 
 ```sh
 pnpm install
@@ -71,7 +73,7 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
     defaultAdapter: codex
 ```
 
-每个 Adapter 的 `env` 只传给该工人。用户可以自己填 `HTTPS_PROXY` 等；本插件不内置、不公布任何代理端点。
+每个 Adapter 的 `env` 只传给该外部 Agent。用户可以自己填 `HTTPS_PROXY` 等；本插件不内置、不公布任何代理端点。
 
 关掉某一个：在 profile 的 `cordis.patch.yml` 覆盖整份 config，把对应 `enabled` 设为 `false`。下一轮模型请求不再看到那把工具。
 

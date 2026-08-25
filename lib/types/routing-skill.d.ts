@@ -7,4 +7,3 @@ export declare function parseSkillMarkdown(raw: string): {
     content: string;
 };
 export declare function registerRoutingSkill(ctx: Context): void;
-//# sourceMappingURL=routing-skill.d.ts.map

@@ -32,6 +32,7 @@
     "build": "tsc -p tsconfig.json && tsdown",
     "test": "vitest run",
     "pack:check": "node scripts/check-pack.mjs",
+    "compat:check": "node scripts/check-composer-picker-compat.mjs",
     "check": "pnpm run build && pnpm run test && pnpm run pack:check"
   },
   "engines": {

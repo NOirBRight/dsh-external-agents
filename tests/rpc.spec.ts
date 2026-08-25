@@ -1,15 +1,22 @@
 import { describe, expect, it, vi } from 'vitest'
-import { PLAN_COMMIT_ENDPOINT, PLAN_PREPARE_ENDPOINT, SAVE_ENDPOINT, SNAPSHOT_ENDPOINT } from '../src/client-contract.ts'
-import { createExternalAgentsRpcHandler } from '../src/rpc.ts'
+import {
+  EXTERNAL_AGENTS_RPC_CHANNEL, EXTERNAL_PLAN_HANDOFF_UNAVAILABLE, PLAN_COMMIT_ENDPOINT, PLAN_PREPARE_ENDPOINT,
+  SAVE_ENDPOINT, SNAPSHOT_ENDPOINT,
+} from '../src/client-contract.ts'
+import { createExternalAgentsRpcHandler, registerExternalAgentsRpc } from '../src/rpc.ts'
+
+function deps() {
+  return {
+    liveConfig: () => ({ adapters: { codex: { enabled: true } }, defaultAdapter: 'codex' as const }),
+    applyConfig: vi.fn(),
+    cachedProbes: () => ({}),
+    setCachedProbes: vi.fn(),
+  }
+}
 
 describe('external-agents RPC', () => {
   it('snapshots catalog and live config', async () => {
-    const handler = createExternalAgentsRpcHandler({
-      liveConfig: () => ({ adapters: { codex: { enabled: true } }, defaultAdapter: 'codex' }),
-      applyConfig: () => undefined,
-      cachedProbes: () => ({}),
-      setCachedProbes: () => undefined,
-    })
+    const handler = createExternalAgentsRpcHandler(deps())
     const result = await handler(SNAPSHOT_ENDPOINT, {}, new AbortController().signal)
     expect(result.ok).toBe(true)
     if (!result.ok) return
@@ -18,28 +25,24 @@ describe('external-agents RPC', () => {
     expect(value.config.defaultAdapter).toBe('codex')
   })
 
-  it('fails legacy Plan handoff RPC closed before coordinator side effects', async () => {
-    const prepare = vi.fn()
-    const commit = vi.fn()
-    const legacyDeps = {
-      liveConfig: () => ({}), applyConfig: () => undefined, cachedProbes: () => ({}),
-      setCachedProbes: () => undefined,
-      planHandoffs: { prepare, commit },
-    }
-    const handler = createExternalAgentsRpcHandler(legacyDeps)
+  it('keeps legacy Plan handoff endpoints visibly fail-closed', async () => {
+    const handler = createExternalAgentsRpcHandler(deps())
     const signal = new AbortController().signal
+    for (const endpoint of [PLAN_PREPARE_ENDPOINT, PLAN_COMMIT_ENDPOINT]) {
+      await expect(handler(endpoint, {}, signal)).resolves.toMatchObject({
+        ok: false, error: { message: EXTERNAL_PLAN_HANDOFF_UNAVAILABLE },
+      })
+    }
+  })
 
-    await expect(handler('plan.prepare', {
-      sessionId: 's1', reviewKey: 'r1', adapter: 'codex', plan: '# Plan',
-    }, signal)).resolves.toMatchObject({
-      ok: false,
-      error: { message: 'External Agent Plan handoff is unavailable in this DSH version' },
-    })
-    await expect(handler('plan.commit', {
-      sessionId: 's1', reviewKey: 'r1', token: 't-1',
-    }, signal)).resolves.toMatchObject({ ok: false })
-    expect(prepare).not.toHaveBeenCalled()
-    expect(commit).not.toHaveBeenCalled()
+  it('registers one trusted-host RPC channel', () => {
+    const handle = vi.fn()
+    const ctx = { inject: vi.fn((_deps, callback) => callback({ connection: { rpc: { handle } } })) }
+    registerExternalAgentsRpc(ctx as never, deps())
+    expect(handle).toHaveBeenCalledOnce()
+    expect(handle).toHaveBeenCalledWith(
+      EXTERNAL_AGENTS_RPC_CHANNEL, expect.any(Function), { authority: 'trusted-host' },
+    )
   })
 
   it('saves a decoded config through applyConfig', async () => {
@@ -51,13 +54,9 @@ describe('external-agents RPC', () => {
       setCachedProbes: () => undefined,
     })
     const result = await handler(SAVE_ENDPOINT, {
-      adapters: { cursor: { enabled: true } },
-      defaultAdapter: 'cursor',
+      adapters: { cursor: { enabled: true } }, defaultAdapter: 'cursor',
     }, new AbortController().signal)
     expect(result.ok).toBe(true)
-    expect(saved).toEqual({
-      adapters: { cursor: { enabled: true } },
-      defaultAdapter: 'cursor',
-    })
+    expect(saved).toEqual({ adapters: { cursor: { enabled: true } }, defaultAdapter: 'cursor' })
   })
 })

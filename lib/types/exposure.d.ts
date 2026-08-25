@@ -54,4 +54,3 @@ export type DelegationTarget = {
 };
 /** Pick the provider for one delegate_worker call. */
 export declare function resolveDelegationTarget(exposure: Exposure, requested: string | undefined): DelegationTarget;
-//# sourceMappingURL=exposure.d.ts.map

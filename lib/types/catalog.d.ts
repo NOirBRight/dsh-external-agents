@@ -32,4 +32,3 @@ export declare const ENABLE_HINT = "\u5728\u8BBE\u7F6E\u7684\u300C\u5916\u90E8 A
 export declare function isAdapterId(value: string): value is AdapterId;
 export declare function isOfficialAdapterId(value: string): value is OfficialAdapterId;
 export declare function isImplementedAdapterId(value: string): value is ImplementedAdapterId;
-//# sourceMappingURL=catalog.d.ts.map

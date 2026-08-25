@@ -6,4 +6,3 @@ export declare function probeAdapter(id: AdapterId, resolveExecutable: (name: st
 export declare function probeAll(resolveExecutable: (name: string, env: Record<string, string>, signal: AbortSignal) => Promise<string>, signal: AbortSignal, paths?: Partial<Record<AdapterId, string>>): Promise<Partial<Record<AdapterId, AdapterProbe>>>;
 export declare function probeModels(probes: Partial<Record<AdapterId, AdapterProbe>>): Promise<Partial<Record<AdapterId, AdapterProbe>>>;
 export declare function startOfficialProbes(ctx: Context): void;
-//# sourceMappingURL=probe.d.ts.map

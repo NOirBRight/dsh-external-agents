@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from 'vitest'
-import { approveDshPlan, disabledPlanWorkers, handoffPlan, planHandoffAvailability, planReviewOf, selectPlanTarget } from '../src/client/plan-review.ts'
+import { describe, expect, it } from 'vitest'
+import { disabledPlanWorkers, planReviewOf, selectPlanTarget } from '../src/client/plan-review.ts'
 
 describe('external plan review', () => {
   it('narrows only a binary plan-review question', () => {
@@ -11,50 +11,21 @@ describe('external plan review', () => {
     expect(planReviewOf([{ id: 'q', question: 'Hello?' }])).toBeUndefined()
   })
 
-  it('renders external Plan targets visibly unavailable and unselectable', () => {
-    expect(planHandoffAvailability()).toEqual({ available: false, reasonKey: 'plan.externalUnavailable' })
-    const workers = disabledPlanWorkers({
-      catalog: [{ id: 'codex' }],
-      config: { adapters: { codex: { enabled: true } } },
+  it('uses collision-free target IDs and keeps External Agents unavailable', () => {
+    const agents = disabledPlanWorkers({
+      catalog: [{ id: 'codex' }], config: { adapters: { codex: { enabled: false } } },
       probes: { codex: { found: true } },
     }, {
-      labelOf: () => 'Codex Worker',
-      productOf: () => 'Codex',
-      missingLabel: 'missing',
-      unavailableLabel: 'External Plan handoff unavailable',
+      labelOf: () => 'Codex External Agent', productOf: () => 'Codex',
+      missingLabel: 'missing', unavailableLabel: 'External Plan handoff unavailable',
     })
-    expect(workers).toEqual([{
-      id: 'codex',
-      label: 'Codex Worker',
-      description: 'Codex · External Plan handoff unavailable',
-      disabled: true,
+    expect(agents).toEqual([{
+      id: 'external-agent:codex', adapterId: 'codex', label: 'Codex External Agent',
+      description: 'Codex · External Plan handoff unavailable', disabled: true,
     }])
     expect(selectPlanTarget('codex')).toBeNull()
+    expect(selectPlanTarget('external-agent:unknown')).toBeNull()
+    expect(selectPlanTarget('external-agent:codex')).toBe('external-agent:codex')
     expect(selectPlanTarget('dsh')).toBe('dsh')
-  })
-
-  it('commits the child model before the one DSH approval response', async () => {
-    const commit = vi.fn(async () => true)
-    const respond = vi.fn(async () => undefined)
-    await expect(approveDshPlan(commit, respond)).resolves.toBe(true)
-    expect(commit.mock.invocationCallOrder[0]).toBeLessThan(respond.mock.invocationCallOrder[0]!)
-
-    respond.mockClear()
-    await expect(approveDshPlan(async () => false, respond)).resolves.toBe(false)
-    expect(respond).not.toHaveBeenCalled()
-  })
-
-  it('fails closed before any external Plan handoff stage', async () => {
-    const prepare = vi.fn()
-    const cancel = vi.fn()
-    const commit = vi.fn()
-
-    await expect(handoffPlan({ prepare, cancel, commit })).rejects.toThrow(
-      'External Agent Plan handoff is unavailable in this DSH version',
-    )
-
-    expect(prepare).not.toHaveBeenCalled()
-    expect(cancel).not.toHaveBeenCalled()
-    expect(commit).not.toHaveBeenCalled()
   })
 })
