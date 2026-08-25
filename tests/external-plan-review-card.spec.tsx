@@ -40,7 +40,12 @@ function button(card: ReactTestRenderer, label: string) {
 async function click(card: ReactTestRenderer, label: string) {
   await act(async () => { button(card, label).props.onClick(); await Promise.resolve(); await Promise.resolve(); await Promise.resolve() })
 }
-function RegisteredCommit({ owner, commit }: { owner: ContinueInDshOwner; commit: () => Promise<boolean> }) {
+function RegisteredCommit({ owner, commit, onMount }: {
+  owner: ContinueInDshOwner
+  commit: () => Promise<boolean>
+  onMount?: () => void
+}) {
+  React.useState(() => { onMount?.(); return null })
   React.useLayoutEffect(() => owner.registerCommit(commit), [commit, owner.registerCommit])
   return <button data-visible-picker disabled={owner.locked}>picker</button>
 }
@@ -130,7 +135,10 @@ describe('ExternalPlanReviewCard', () => {
 
   it('resets terminal state and re-registers the Composer commit for a different pending wait', async () => {
     const commit = vi.fn(async () => true)
-    const renderSlot = (_slot: string, owner: ContinueInDshOwner) => <RegisteredCommit owner={owner} commit={commit} />
+    const onMount = vi.fn()
+    const renderSlot = (_slot: string, owner: ContinueInDshOwner) => (
+      <RegisteredCommit owner={owner} commit={commit} onMount={onMount} />
+    )
     let card!: ReactTestRenderer
     await act(async () => { card = create(<ExternalPlanReviewCard {...props(
       pending(vi.fn(async () => ({ accepted: false })), 'one'), { renderSlot },
@@ -142,5 +150,6 @@ describe('ExternalPlanReviewCard', () => {
     expect(button(card, en['plan.approve']).props.disabled).toBe(false)
     await click(card, en['plan.approve'])
     expect(commit).toHaveBeenCalledTimes(2)
+    expect(onMount).toHaveBeenCalledTimes(2)
   })
 })

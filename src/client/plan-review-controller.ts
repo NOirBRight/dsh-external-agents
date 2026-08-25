@@ -122,7 +122,7 @@ export function usePlanReviewController(options: PlanReviewControllerOptions): P
   const registerCommit = useCallback((commit: (() => Promise<boolean>) | null): (() => void) => {
     commitRef.current = commit
     return () => { if (commitRef.current === commit) commitRef.current = null }
-  }, [options.matched.key])
+  }, [])
 
   const selectTarget = useCallback((target: PlanTargetId): void => {
     if (target === 'dsh' && !busy && !blocked) setSelectedTarget(target)

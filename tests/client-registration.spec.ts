@@ -7,7 +7,7 @@ vi.mock('@deepseek-ai/dsh-client-ui-primitives', () => ({
 import { CONTINUE_IN_DSH_SLOT } from '../src/client-contract.ts'
 import { apply, CONTINUE_IN_DSH_SLOT as CLIENT_CONTINUE_IN_DSH_SLOT } from '../src/client/index.ts'
 
-function registrationBench() {
+function registrationBench(rpcCall = vi.fn()) {
   const entries: Array<{ spec: Record<string, unknown>; component: unknown }> = []
   const localeDispose = vi.fn()
   const registerLocale = vi.fn(() => localeDispose)
@@ -28,13 +28,30 @@ function registrationBench() {
     slots, modelDirectories: { directoryFor },
     inject: (_names: string[], callback: (scope: unknown) => void) => callback(ctx),
     effect: (register: () => unknown) => { const value = register(); effects.push(value); return value },
-    get: vi.fn(() => ({ rpc: { call: vi.fn() } })),
+    get: vi.fn(() => ({ rpc: { call: rpcCall } })),
   }
   apply(ctx as never)
   return { entries, effects, localeDispose, registerLocale, directory, directoryFor }
 }
 
 describe('client plugin composition', () => {
+  it('keeps the loaded target catalog when the follow-up probe fails', async () => {
+    const snapshot = {
+      config: { adapters: {} }, probes: {},
+      catalog: [{
+        id: 'codex', displayName: 'Codex', executable: 'codex', toolName: 'subagent_codex',
+        docsUrl: 'https://example.test', loginMode: 'product-managed', supportsUnattended: true,
+        knownModels: [],
+      }],
+    }
+    const rpcCall = vi.fn()
+      .mockResolvedValueOnce({ ok: true, value: snapshot })
+      .mockResolvedValueOnce({ ok: false, error: { message: 'probe unavailable' } })
+    const { entries } = registrationBench(rpcCall)
+    const face = (entries[0]!.spec.inject as () => { loadTargets: () => Promise<typeof snapshot> })()
+    await expect(face.loadTargets()).resolves.toMatchObject({ catalog: [{ id: 'codex' }], probes: {} })
+  })
+
   it('registers the Plan owner and settings section through public slots', () => {
     const { entries, effects, localeDispose, registerLocale, directoryFor } = registrationBench()
     expect(CLIENT_CONTINUE_IN_DSH_SLOT).toBe(CONTINUE_IN_DSH_SLOT)

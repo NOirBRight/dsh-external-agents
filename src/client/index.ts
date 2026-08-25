@@ -60,8 +60,12 @@ export function apply(ctx: ClientContext): void {
 
   const loadPlanTargets = async (): Promise<import('../client-contract.ts').ExternalAgentsSnapshot> => {
     const snapshot = await load()
-    const probes = await probe(false)
-    return { ...snapshot, probes }
+    try {
+      const probes = await probe(false)
+      return { ...snapshot, probes }
+    } catch {
+      return snapshot
+    }
   }
 
   const pick: ExternalAgentsFace['pick'] = async () => {

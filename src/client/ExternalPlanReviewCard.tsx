@@ -1,6 +1,6 @@
 /** External Agents Plan-review router and registered child entry. */
 
-import type { CSSProperties } from 'react'
+import { Fragment, type CSSProperties } from 'react'
 import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { Button, IconEditOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
@@ -81,9 +81,12 @@ export function ExternalPlanReviewCard(props: ExternalPlanReviewCardProps) {
       <div style={body}><MarkdownText text={review.plan} /></div>
       <div style={router}>
         <strong style={{ color: 'var(--dsw-alias-label-primary)', fontSize: 13 }}>{props.t('plan.executeWith')}</strong>
-        {props.renderSlot(CONTINUE_IN_DSH_SLOT, owner, {
-          fallback: <CurrentModelSelector owner={owner} label={props.t('plan.currentModel')} />,
-        })}
+        {/* The pending wait key owns child lifecycle; callback identity is not a Plan identifier. */}
+        <Fragment key={props.matched.key}>
+          {props.renderSlot(CONTINUE_IN_DSH_SLOT, owner, {
+            fallback: <CurrentModelSelector owner={owner} label={props.t('plan.currentModel')} />,
+          })}
+        </Fragment>
         <span role='status' style={{ color: 'var(--dsw-alias-label-tertiary)', fontSize: 13 }}>{props.t('plan.externalUnavailable')}</span>
       </div>
       <footer style={footer}>
