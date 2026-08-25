@@ -7,7 +7,10 @@ import type { ConnectionRpcHandler } from '@deepseek-ai/dsh-client-connection'
 import { ADAPTERS, ADAPTER_IDS } from './catalog.ts'
 import {
   EXTERNAL_AGENTS_RPC_CHANNEL,
+  EXTERNAL_PLAN_HANDOFF_UNAVAILABLE,
   PICK_ENDPOINT,
+  PLAN_COMMIT_ENDPOINT,
+  PLAN_PREPARE_ENDPOINT,
   PROBE_ENDPOINT,
   SAVE_ENDPOINT,
   SNAPSHOT_ENDPOINT,
@@ -82,6 +85,9 @@ export function createExternalAgentsRpcHandler(deps: ExternalAgentsRpcDeps): Con
       deps.setCachedProbes(probes)
       return { ok: true as const, value: { probes } }
     }
+    if (endpoint === PLAN_PREPARE_ENDPOINT || endpoint === PLAN_COMMIT_ENDPOINT) {
+      return fail(EXTERNAL_PLAN_HANDOFF_UNAVAILABLE)
+    }
     if (endpoint === PICK_ENDPOINT) {
       try {
         const { stdout } = await promisify(execFile)('zenity', [
@@ -111,7 +117,7 @@ export function registerExternalAgentsRpc(ctx: Context, deps: ExternalAgentsRpcD
     connectionCtx.connection.rpc.handle(
       EXTERNAL_AGENTS_RPC_CHANNEL,
       createExternalAgentsRpcHandler(deps),
-      { authority: 'loopback' },
+      { authority: 'trusted-host' },
     )
   })
 }

@@ -27,6 +27,8 @@ export type { AdapterConfig, Exposure, NamedToolExposure } from './exposure.ts'
 export {
   EXTERNAL_AGENTS_RPC_CHANNEL,
   PICK_ENDPOINT,
+  PLAN_COMMIT_ENDPOINT,
+  PLAN_PREPARE_ENDPOINT,
   PROBE_ENDPOINT,
   SAVE_ENDPOINT,
   SNAPSHOT_ENDPOINT,
@@ -128,8 +130,9 @@ export function apply(ctx: Context, config: Config): void {
   remount(live)
   registerRoutingSkill(ctx)
   startOfficialProbes(ctx)
+  const home = dshHome()
   const subprocess = ctx.get('subprocess')
-  let probeCache = loadPersistedProbes(dshHome())
+  let probeCache = loadPersistedProbes(home)
   registerExternalAgentsRpc(ctx, {
     liveConfig: () => live,
     applyConfig: remount,

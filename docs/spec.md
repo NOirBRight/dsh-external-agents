@@ -58,8 +58,9 @@ DSH 仍是编排器与工具执行方。工人用自己的 harness 和账号干�
 ### 5.1 安装
 
 ```sh
-dsh plugin --profile web add /home/noirbright/Workstation/dsh-external-agents
-# 或以后的 git/npm spec
+npm pack --ignore-scripts
+dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
+# 发布后也可使用 registry spec
 ```
 
 插件自带 `cordis.patch.yml`，一次挂上 host 行和 client 行。用户不必手写 provider YAML。
@@ -187,3 +188,4 @@ dsh plugin --profile web add /home/noirbright/Workstation/dsh-external-agents
 - 人在 Job Panel 里点取消（等 DSH 官方做完）
 - 进度流进父对话
 - 在本插件里实现 OAuth
+- 在 DSH 没有公开 delegated Plan resolution seam 时，从 Plan Review 直接交接给 Product Worker 或 shadow `exit_plan_mode`（见 ADR 0007）

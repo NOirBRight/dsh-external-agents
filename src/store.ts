@@ -1,6 +1,6 @@
 /** Persist Exposure to a profile-local file. RPC writes are authoritative. */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { mkdirSync, readFileSync, renameSync, unlinkSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import type { AdapterId } from './catalog.ts'
 import type { AdapterProbe } from './client-contract.ts'
@@ -16,7 +16,19 @@ export function settingsFilePath(home: string, profile = 'web'): string {
 }
 
 export function persistEnabled(): boolean {
-  return process.env.VITEST !== 'true' && typeof process.env.DSH_HOME === 'string' && process.env.DSH_HOME.length > 0
+  return process.env.VITEST !== 'true'
+}
+
+function writeJsonAtomically(path: string, value: unknown): void {
+  mkdirSync(dirname(path), { recursive: true })
+  const temporary = path + '.' + String(process.pid) + '.' + String(Date.now()) + '.tmp'
+  try {
+    writeFileSync(temporary, JSON.stringify(value, null, 2) + '\n', 'utf8')
+    renameSync(temporary, path)
+  } catch (cause) {
+    try { unlinkSync(temporary) } catch { /* already renamed or never created */ }
+    throw cause
+  }
 }
 
 export function loadPersistedConfig(home: string, profile = 'web'): Config | undefined {
@@ -31,9 +43,7 @@ export function loadPersistedConfig(home: string, profile = 'web'): Config | und
 
 export function savePersistedConfig(home: string, config: Config, profile = 'web'): void {
   if (!persistEnabled()) return
-  const path = settingsFilePath(home, profile)
-  mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, JSON.stringify(config, null, 2) + '\n', 'utf8')
+  writeJsonAtomically(settingsFilePath(home, profile), config)
 }
 
 export function dshHome(): string {
@@ -63,7 +73,5 @@ export function savePersistedProbes(
   profile = 'web',
 ): void {
   if (!persistEnabled()) return
-  const path = probesFilePath(home, profile)
-  mkdirSync(dirname(path), { recursive: true })
-  writeFileSync(path, JSON.stringify(probes, null, 2) + '\n', 'utf8')
+  writeJsonAtomically(probesFilePath(home, profile), probes)
 }

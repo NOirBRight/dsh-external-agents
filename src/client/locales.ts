@@ -35,6 +35,16 @@ export type ExternalAgentsKey =
   | 'install.claude-code'
   | 'install.cursor'
   | 'install.antigravity'
+  | 'plan.kicker'
+  | 'plan.title'
+  | 'plan.executeWith'
+  | 'plan.workers'
+  | 'plan.currentModel'
+  | 'plan.externalUnavailable'
+  | 'plan.discuss'
+  | 'plan.keep'
+  | 'plan.approve'
+  | 'plan.modelFailed'
 
 export const zh: Record<ExternalAgentsKey, string> = {
   nav: '外部 Agent',
@@ -73,6 +83,16 @@ export const zh: Record<ExternalAgentsKey, string> = {
   'install.claude-code': '安装 Claude Code 并完成原生登录',
   'install.cursor': '安装后运行：cursor-agent login',
   'install.antigravity': '安装 agy 并用产品自己的方式登录',
+  'plan.kicker': '计划已就绪',
+  'plan.title': '选择执行方式',
+  'plan.executeWith': '执行方式',
+  'plan.workers': '外部 Worker',
+  'plan.currentModel': '使用当前会话模型。安装 composer-picker 后可在这里改执行模型。',
+  'plan.externalUnavailable': '当前 DSH 版本没有安全的外部 Plan 交接接口；外部 Agent 目标暂不可选，未启动任何任务。',
+  'plan.discuss': '讨论',
+  'plan.keep': '继续规划',
+  'plan.approve': '批准',
+  'plan.modelFailed': '切换 DSH 执行模型失败；计划尚未批准。',
 }
 
 export const en: Record<ExternalAgentsKey, string> = {
@@ -112,4 +132,14 @@ export const en: Record<ExternalAgentsKey, string> = {
   'install.claude-code': 'Install Claude Code and complete native login',
   'install.cursor': 'After install, run: cursor-agent login',
   'install.antigravity': 'Install agy and sign in with the product itself',
+  'plan.kicker': 'Plan ready',
+  'plan.title': 'Choose how to execute',
+  'plan.executeWith': 'Execute with',
+  'plan.workers': 'External workers',
+  'plan.currentModel': 'Uses the current conversation model. Install composer-picker to change it here.',
+  'plan.externalUnavailable': 'This DSH version has no safe external Plan handoff API. External Agent targets are unavailable and no task has started.',
+  'plan.discuss': 'Discuss',
+  'plan.keep': 'Keep planning',
+  'plan.approve': 'Approve',
+  'plan.modelFailed': 'Could not switch the DSH execution model; the plan was not approved.',
 }

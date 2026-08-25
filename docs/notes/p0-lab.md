@@ -23,7 +23,7 @@
    YAML `name: '@deepseek-ai/dsh-subagent-codex'` 从 profile 解析会失败。P0 在 `apply()` 里 `ctx.plugin()` 官方提供方。
 
 5. **lab 的 pnpm store 可能对不齐 `dsh plugin add`。**  
-   可以对齐 store，或手写 `link:` + `node_modules` symlink + `dsh.profile.bundles`。
+   当前 release gate 只接受 pack 后的 artifact；不再使用源码 checkout alias、手工 symlink 或直接改 bundle 清单。
 
 6. **Grok 当父模型会 `Duplicate tool names: web_search`。**  
    lab 验收父模型用 `ollama-cloud` / `glm-5.2`。
@@ -35,6 +35,8 @@
 8. **Agy print 契约：** `--print` 必须最后一项带着任务；JSON 是 `status=SUCCESS` + `response`。consumer Gemini 会按出口 IP 拒 `User location is not supported`。  
    **产品面：** 用户给 Adapter 配 `env`（任意键，只进该工人）。本插件不内置、不要求、不公布代理端点。  
    **本机运维（不要写进产品/设置文案）：** lab 这台用 FlClash 进程规则拆 `agy` 出口。那是操作，不是 ADR。
+
+9. **Agy 前台+后台已通（3082）。** 前台 `worker_antigravity` → `P1_AGY_OK`；后台注册 `subagent-1`（`kind: subagent`）。父模型用 `ollama-cloud` / `glm-5.2`。
 
 ## 下一步（P2）
 

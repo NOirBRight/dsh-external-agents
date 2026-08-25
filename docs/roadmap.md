@@ -16,7 +16,7 @@
 
 ## P1 — Cursor 与 Antigravity Adapter
 
-状态：**lab 已接线**。Cursor 前台+后台跑通。Agy 工具可见、后台 Job 能注册；本机 `agy --print` 自身以 `Agent execution terminated due to error` 失败（`agy models` 能列模型），见 [notes/p0-lab.md](notes/p0-lab.md)。
+状态：**lab 已验收**。Cursor 与 Agy 前台+后台都通。见 [notes/p0-lab.md](notes/p0-lab.md)。
 
 - `cursor-agent -p --output-format json` 的 one-shot provider。
 - `agy -p --output-format json` 的 one-shot provider。
@@ -48,3 +48,4 @@
 - 产品会话续聊
 - 替代 Job Panel
 - Cursor 私有 HTTP
+- 在 DSH 没有公开 delegated Plan resolution seam 时实现外部 Plan 交接或完整 shadow `exit_plan_mode`（见 ADR 0007）

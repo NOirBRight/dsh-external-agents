@@ -27,18 +27,27 @@ DSH 继续当编排器；第三方产品继续当工人；设置页让人看得�
 
 P0–P3 已在 lab 接线。技能 `delegate-product-worker` 只路由、不 spawn。
 
+## Plan 执行路由
+
+在干净的官方 DSH 0.1.1-rc.2 上，Plan Review 没有公开、安全的外部交接 seam。本插件因此失败关闭：外部 Agent 目标会显示但不可选，不会 prepare、回答或取消 Plan 问题、commit，也不会启动 Worker。继续在 DSH 执行仍走官方批准答案；设置、探测、普通前台/后台委托和 Jobs 不受影响。
+
+与 `dsh-composer-picker` 双装时，本插件仍以 priority `-6` 拥有顶层 `conversation.composer` 路由卡，并保留插件拥有的 `external-agents.plan-review.continue-in-dsh` child slot。picker 可以继续接入 DSH 执行模型选择；本插件单装时 Continue in DSH 使用当前模型。
+
+完整 shadow `exit_plan_mode` 当前未获 ADR 授权，不实现。未来只有 Core 提供公开、可验证的 delegated Plan resolution seam，或另开 ADR 批准 shadow 方案后，才恢复外部 Plan 交接。见 [ADR 0007](docs/adr/0007-plan-handoff-fails-closed.md)。
+
 ## 安装（dsh-lab）
 
 本机验收装进 **dsh-lab**（`DSH_HOME=~/.dsh-lab`，GUI `http://127.0.0.1:3082`），不要改正在跑的 dsh-web。
 
 ```sh
 pnpm install
-pnpm run build
-DSH_HOME=/home/noirbright/.dsh-lab dsh plugin --profile web add /home/noirbright/Workstation/dsh-external-agents
+pnpm check
+npm pack --ignore-scripts
+DSH_HOME=~/.dsh-lab dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
 systemctl --user restart dsh-lab.service
 ```
 
-lab 的 pnpm store 若与当前 `dsh plugin` 对不齐，可以直接把依赖写成 `link:`，并在 profile 的 `node_modules` 里做同名 symlink，再把 `dsh-external-agents` 追加到 `dsh.profile.bundles`。
+lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、手工 symlink 或直接修改 profile bundle 清单。依赖 store 不完整时先完成正常安装，再重新打包验收。
 
 装上之后，官方预设里的 `tool-subagent-codex` / `tool-subagent-claude-code` 保持 `disabled: true`。模型看到的是本插件在宿主平面注册的同名工具。
 

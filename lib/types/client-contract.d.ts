@@ -6,6 +6,10 @@ export declare const SNAPSHOT_ENDPOINT = "snapshot";
 export declare const SAVE_ENDPOINT = "save";
 export declare const PROBE_ENDPOINT = "probe";
 export declare const PICK_ENDPOINT = "pick";
+/** Legacy endpoints stay named only so old clients fail closed with a clear error. */
+export declare const PLAN_PREPARE_ENDPOINT = "plan.prepare";
+export declare const PLAN_COMMIT_ENDPOINT = "plan.commit";
+export declare const EXTERNAL_PLAN_HANDOFF_UNAVAILABLE = "External Agent Plan handoff is unavailable in this DSH version";
 export interface AdapterProbe {
     found: boolean;
     path?: string;
