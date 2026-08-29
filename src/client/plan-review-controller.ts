@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client'
+import type { PendingWait } from './shim.js'
 import { ADAPTERS, type AdapterId } from '../catalog.ts'
 import type { ExternalAgentsSnapshot, PlanExternalAgentTarget, PlanTargetId } from '../client-contract.ts'
 import { disabledPlanWorkers, type PlanReview } from './plan-review.ts'
@@ -12,11 +12,16 @@ class ResponseRejectedError extends Error {}
 async function respond(
   wait: QuestionWait, id: string, label: string, rejectedMessage: string, failedMessage: string,
 ): Promise<void> {
+  const target = wait as unknown as { answer?: (a: unknown) => Promise<void>; respond?: (m: unknown) => Promise<{ accepted: boolean }>; sessionId: unknown }
+  if (typeof target.answer === 'function') {
+    try { await target.answer({ answers: [{ id, selected: [label] }] }) } catch { throw new Error(failedMessage) }
+    return
+  }
   let receipt
   try {
-    receipt = await wait.respond({
+    receipt = await target.respond!({
       ok: true,
-      value: { sessionId: wait.sessionId, answer: { answers: [{ id, selected: [label] }] } },
+      value: { sessionId: target.sessionId, answer: { answers: [{ id, selected: [label] }] } },
     })
   } catch {
     throw new Error(failedMessage)
@@ -27,9 +32,14 @@ async function respond(
 async function cancel(
   wait: QuestionWait, message: string, rejectedMessage: string, failedMessage: string,
 ): Promise<void> {
+  const target = wait as unknown as { cancel?: () => Promise<void>; respond?: (m: unknown) => Promise<{ accepted: boolean }> }
+  if (typeof target.cancel === 'function') {
+    try { await target.cancel() } catch { throw new Error(failedMessage) }
+    return
+  }
   let receipt
   try {
-    receipt = await wait.respond({ ok: false, error: { code: 'cancelled', message, details: {} } })
+    receipt = await target.respond!({ ok: false, error: { code: 'cancelled', message, details: {} } })
   } catch {
     throw new Error(failedMessage)
   }

@@ -1,5 +1,5 @@
 /** External Agents Plan-review router and registered child entry. */
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client';
+import type { PendingWait } from './shim.js';
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots';
 import { CONTINUE_IN_DSH_SLOT, type ContinueInDshOwner, type ExternalAgentsSnapshot } from '../client-contract.ts';
 export { CONTINUE_IN_DSH_SLOT } from '../client-contract.ts';

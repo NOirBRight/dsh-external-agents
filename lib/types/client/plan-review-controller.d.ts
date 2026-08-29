@@ -1,4 +1,4 @@
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client';
+import type { PendingWait } from './shim.js';
 import type { ExternalAgentsSnapshot, PlanExternalAgentTarget, PlanTargetId } from '../client-contract.ts';
 import { type PlanReview } from './plan-review.ts';
 import type { ExternalAgentsKey } from './locales.ts';

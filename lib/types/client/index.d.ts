@@ -1,5 +1,5 @@
 /** Browser half: External Agents page inside Settings. */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client';
+import type { ClientContext } from './shim.js';
 import { type ExternalAgentsKey } from './locales.ts';
 export { CONTINUE_IN_DSH_SLOT } from './ExternalPlanReviewCard.tsx';
 export type { ContinueInDshOwner, PlanExternalAgentTarget, PlanTargetId, PlanWorkerTarget } from './ExternalPlanReviewCard.tsx';

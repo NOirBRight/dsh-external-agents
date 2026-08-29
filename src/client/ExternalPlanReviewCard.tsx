@@ -1,7 +1,7 @@
 /** External Agents Plan-review router and registered child entry. */
 
 import { Fragment, type CSSProperties } from 'react'
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client'
+import type { PendingWait } from './shim.js'
 import type { InjectFace, PropsLocale, PropsRenderSlots, PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
 import { Button, IconEditOutline16, MarkdownText } from '@deepseek-ai/dsh-client-ui-primitives'
 import { CONTINUE_IN_DSH_SLOT, type ContinueInDshOwner, type ExternalAgentsSnapshot } from '../client-contract.ts'
@@ -63,7 +63,10 @@ function CurrentModelSelector({ owner, label }: { owner: ContinueInDshOwner; lab
 }
 
 export function ExternalPlanReviewCard(props: ExternalPlanReviewCardProps) {
-  const review = planReviewOf(props.matched.payload.questions)
+  const raw = props.matched as unknown as { questions?: readonly unknown[]; payload?: { questions?: readonly unknown[] } }
+  const qs = Array.isArray(raw.questions) ? raw.questions : Array.isArray(raw.payload?.questions) ? raw.payload.questions : []
+  const questions = qs as readonly import('./plan-review.ts').QuestionItem[]
+  const review = planReviewOf(questions)
   if (review === undefined) return null
   const controller = usePlanReviewController({ matched: props.matched, review, loadTargets: props.loadTargets, t: props.t })
   const owner: ContinueInDshOwner = {

@@ -1,5 +1,5 @@
 /** Plan-review narrowing plus the fail-closed external handoff capability seam. */
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client';
+import type { PendingWait } from './shim.js';
 import { type AdapterId } from '../catalog.ts';
 import type { PlanExternalAgentTarget, PlanTargetId } from '../client-contract.ts';
 export interface PlanReviewOption {
@@ -13,7 +13,7 @@ export interface PlanReview {
     approve: PlanReviewOption;
     decline?: PlanReviewOption;
 }
-interface QuestionItem {
+export interface QuestionItem {
     id: string;
     question: string;
     detail?: string;
@@ -24,9 +24,28 @@ interface QuestionItem {
         approve?: string;
     };
 }
-type QuestionWaitLike = PendingWait<'question'>;
+interface QuestionWaitLike extends Omit<PendingWait<'question'>, 'payload' | 'questions'> {
+    key: string;
+    questions?: readonly QuestionItem[];
+    payload?: {
+        questions: readonly QuestionItem[];
+    };
+}
 interface ComposerOwner {
-    interactions: readonly PendingWait[];
+    /** alpha.1: the single effective interaction, undefined when none. */
+    pendingInteraction?: {
+        kind: string;
+        key?: string;
+        payload?: unknown;
+        questions?: unknown;
+    } | undefined;
+    /** rc.2: the pending-interaction array. Kept as a fallback. */
+    interactions?: readonly {
+        kind: string;
+        key?: string;
+        payload?: unknown;
+        questions?: unknown;
+    }[];
 }
 export declare function planReviewOf(questions: readonly QuestionItem[]): PlanReview | undefined;
 export declare function selectPlanReview(owner: ComposerOwner): QuestionWaitLike | null;

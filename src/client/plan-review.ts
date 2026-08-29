@@ -1,6 +1,6 @@
 /** Plan-review narrowing plus the fail-closed external handoff capability seam. */
 
-import type { PendingWait } from '@deepseek-ai/dsh-client-runtime/client'
+import type { PendingWait } from './shim.js'
 import { ADAPTER_IDS, type AdapterId } from '../catalog.ts'
 import type { PlanExternalAgentTarget, PlanTargetId } from '../client-contract.ts'
 
@@ -12,7 +12,7 @@ export interface PlanReview {
   approve: PlanReviewOption
   decline?: PlanReviewOption
 }
-interface QuestionItem {
+export interface QuestionItem {
   id: string
   question: string
   detail?: string
@@ -20,8 +20,13 @@ interface QuestionItem {
   options?: readonly PlanReviewOption[]
   intent?: { kind: string, approve?: string }
 }
-type QuestionWaitLike = PendingWait<'question'>
-interface ComposerOwner { interactions: readonly PendingWait[] }
+interface QuestionWaitLike extends Omit<PendingWait<'question'>, 'payload' | 'questions'> { key: string; questions?: readonly QuestionItem[]; payload?: { questions: readonly QuestionItem[] } }
+interface ComposerOwner {
+  /** alpha.1: the single effective interaction, undefined when none. */
+  pendingInteraction?: { kind: string; key?: string; payload?: unknown; questions?: unknown } | undefined
+  /** rc.2: the pending-interaction array. Kept as a fallback. */
+  interactions?: readonly { kind: string; key?: string; payload?: unknown; questions?: unknown }[]
+}
 
 export function planReviewOf(questions: readonly QuestionItem[]): PlanReview | undefined {
   if (questions.length !== 1) return undefined
@@ -37,13 +42,30 @@ export function planReviewOf(questions: readonly QuestionItem[]): PlanReview | u
     ...decline === undefined ? {} : { decline } }
 }
 
-function isQuestionWait(value: PendingWait): value is QuestionWaitLike {
-  return value.kind === 'question'
+function isQuestionWait(value: { kind: string; key?: string; payload?: unknown; questions?: unknown }): value is QuestionWaitLike {
+  if (value.kind !== 'question' && value.kind !== 'plan-review') return false
+  if (Array.isArray((value as { questions?: unknown }).questions)) return true
+  if (value.payload === undefined || typeof value.payload !== 'object' || value.payload === null) return false
+  return Array.isArray((value.payload as { questions?: unknown }).questions)
+}
+
+function questionsOf(wait: QuestionWaitLike): readonly QuestionItem[] {
+  if (Array.isArray(wait.questions)) return wait.questions as readonly QuestionItem[]
+  if (wait.payload !== undefined && typeof wait.payload === 'object' && wait.payload !== null) {
+    const qs = (wait.payload as { questions?: unknown }).questions
+    if (Array.isArray(qs)) return qs as readonly QuestionItem[]
+  }
+  return []
 }
 
 export function selectPlanReview(owner: ComposerOwner): QuestionWaitLike | null {
-  const wait = owner.interactions.find(isQuestionWait)
-  return wait === undefined || planReviewOf(wait.payload.questions) === undefined ? null : wait
+  // alpha.1 replaced the pending-interaction array with one effective value.
+  const candidates = owner.pendingInteraction !== undefined
+    ? [owner.pendingInteraction]
+    : owner.interactions ?? []
+  const wait = candidates.find(isQuestionWait)
+  if (wait === undefined) return null
+  return planReviewOf(questionsOf(wait)) === undefined ? null : wait
 }
 
 export function disabledPlanWorkers(
