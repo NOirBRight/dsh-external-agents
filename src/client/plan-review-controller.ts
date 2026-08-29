@@ -9,41 +9,38 @@ type QuestionWait = PendingWait<'question'>
 type Translate = (key: ExternalAgentsKey) => string
 class ResponseRejectedError extends Error {}
 
+async function callWait(
+  work: () => Promise<{ accepted?: boolean } | void>,
+  rejectedMessage: string,
+  failedMessage: string,
+): Promise<void> {
+  let receipt: { accepted?: boolean } | void
+  try { receipt = await work() } catch { throw new Error(failedMessage) }
+  if (receipt !== undefined && receipt.accepted === false) throw new ResponseRejectedError(rejectedMessage)
+}
+
 async function respond(
   wait: QuestionWait, id: string, label: string, rejectedMessage: string, failedMessage: string,
 ): Promise<void> {
-  const target = wait as unknown as { answer?: (a: unknown) => Promise<void>; respond?: (m: unknown) => Promise<{ accepted: boolean }>; sessionId: unknown }
-  if (typeof target.answer === 'function') {
-    try { await target.answer({ answers: [{ id, selected: [label] }] }) } catch { throw new Error(failedMessage) }
+  const answers = { answers: [{ id, selected: [label] }] }
+  if (typeof wait.answer === 'function') {
+    await callWait(() => wait.answer!(answers), rejectedMessage, failedMessage)
     return
   }
-  let receipt
-  try {
-    receipt = await target.respond!({
-      ok: true,
-      value: { sessionId: target.sessionId, answer: { answers: [{ id, selected: [label] }] } },
-    })
-  } catch {
-    throw new Error(failedMessage)
-  }
-  if (!receipt.accepted) throw new ResponseRejectedError(rejectedMessage)
+  await callWait(() => wait.respond!({
+    ok: true,
+    value: { sessionId: wait.sessionId, answer: answers },
+  }), rejectedMessage, failedMessage)
 }
 
 async function cancel(
   wait: QuestionWait, message: string, rejectedMessage: string, failedMessage: string,
 ): Promise<void> {
-  const target = wait as unknown as { cancel?: () => Promise<void>; respond?: (m: unknown) => Promise<{ accepted: boolean }> }
-  if (typeof target.cancel === 'function') {
-    try { await target.cancel() } catch { throw new Error(failedMessage) }
+  if (typeof wait.cancel === 'function') {
+    await callWait(() => wait.cancel!(), rejectedMessage, failedMessage)
     return
   }
-  let receipt
-  try {
-    receipt = await target.respond!({ ok: false, error: { code: 'cancelled', message, details: {} } })
-  } catch {
-    throw new Error(failedMessage)
-  }
-  if (!receipt.accepted) throw new ResponseRejectedError(rejectedMessage)
+  await callWait(() => wait.respond!({ ok: false, error: { code: 'cancelled', message, details: {} } }), rejectedMessage, failedMessage)
 }
 
 export interface PlanReviewControllerOptions {
