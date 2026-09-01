@@ -1,12 +1,12 @@
 # 产品规格：Product Worker 控制面
 
-状态：已确认，可供 P0 开工。术语见 [CONTEXT.md](../CONTEXT.md)。决策见 [adr/](adr/)。
+状态：已实现，可供 P0–P3 验收。术语见 [CONTEXT.md](../CONTEXT.md)。决策见 [adr/](adr/)。
 
-已拍板：设置拥有 Exposure；具名工具 + 通用工具都要；无人值守默认自动批准；P0 先配置跑通，P2 再做外部 Agent 设置页。
+当前行为：设置拥有 Exposure；具名工具与通用工具均可用；无人值守策略由 Adapter 配置；设置页提供外部 Agent 管理。
 
 ## 1. 要解决的问题
 
-DSH 0.1.0-rc.7 已经有 Codex / Claude Code 的官方 Product Worker，但生产安装默认不带 provider，预设行是 `disabled: true`，用户要改 YAML、装包、复制预设，才能让模型看到工具。后台 one-shot 已经能进 Job Panel，但没有发现面。
+DSH 0.1.2-alpha.1 已经有 Codex / Claude Code 的官方 Product Worker，但生产安装默认不带 provider，预设行是 `disabled: true`，用户要改 YAML、装包、复制预设，才能让模型看到工具。后台 one-shot 已经能进 Job Panel，但没有发现面。
 
 同时：
 
@@ -59,7 +59,7 @@ DSH 仍是编排器与工具执行方。工人用自己的 harness 和账号干�
 
 ```sh
 npm pack --ignore-scripts
-dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
+dsh plugin --profile web add ./dsh-external-agents-0.2.0.tgz
 # 发布后也可使用 registry spec
 ```
 
@@ -126,7 +126,7 @@ dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
 
 探测失败不阻止插件加载。启用一个探测失败的 Adapter 时，工具调用以明确错误失败，设置卡显示原因。
 
-产品内部模型默认尊重原生配置。设置卡可提供可选覆盖（`--model` / 等价环境变量），空表示不覆盖。
+每个已启用 Adapter 必须提供去掉首尾空白后的非空模型名，Control Plane 显式转发该模型；已禁用 Adapter 可以省略 `model`。
 
 ## 8. 设置分区
 
@@ -137,7 +137,7 @@ dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
 - 名称、一句职责、官方文档链接
 - 探测：路径、版本（能取到就显示）、登录（能探测就显示，不能则写「由产品自身管理」）
 - 启用
-- 可选：模型覆盖、额外 `env`、无人值守策略（自动批准 / 严格拒绝）
+- 模型名（启用时必填）、额外 `env`、无人值守策略（自动批准 / 严格拒绝）
 - 主按钮只做「启用 / 保存」。安装和登录是复制命令，不是本页的浏览器 OAuth
 
 页顶：
@@ -178,11 +178,9 @@ dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
 
 取消必须拆掉产品进程树。已改的文件不回滚。
 
-### 11.1 rc.2 Plan Review 限制
+### 11.1 Plan 归属
 
-官方 DSH 0.1.1-rc.2 只能回答或取消 pending Plan 问题，没有外部交接结果，也没有原子“选择执行模型 + 回答 Plan”seam。因此 Plan Review 中的外部 Agent 目标只显示为不可用；既有 `plan.prepare` / `plan.commit` 名称仅作为兼容入口保留并始终返回 fail-closed 错误，不暴露可执行的 prepare/cancel/commit handoff 能力。
-
-`dsh-composer-picker` v0.1.3 可通过包根公开的 `external-agents.plan-review.continue-in-dsh` slot 组合渲染。Picker 子项拥有 `ModelSelection` 草稿和官方 `ModelDirectory` 提交，并通过 plugin-owned `registerCommit` seam 向顶层 owner 注册一次提交动作；External Agents 只负责编排“Composer 提交模型 → 回答 Plan”。提交失败不回答并允许重试。无 Picker 时沿用当前 DSH 模型。多个客户端仍可在提交与回答之间竞争同一问题：以官方 response receipt 为准；批准后的显式拒绝显示本地化终态错误，transport 异常保持可重试。本插件不声称两步具有原子性。
+本插件不拥有 Plan UI。外部 Agent 的 Plan 交接需要 DSH 官方提供已命名的委托 Plan 归属 seam；在该 seam 出现前，Plan 相关能力完全由 DSH 内置实现负责。
 
 ## 12. 非目标（v1）
 
@@ -194,4 +192,4 @@ dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
 - 人在 Job Panel 里点取消（等 DSH 官方做完）
 - 进度流进父对话
 - 在本插件里实现 OAuth
-- 在 DSH 没有公开 delegated Plan resolution seam 时，从 Plan Review 直接交接给 Product Worker 或 shadow `exit_plan_mode`（见 ADR 0007）
+- 在 DSH 没有公开 delegated Plan resolution seam 时，本插件不提供 Plan 交接或 shadow `exit_plan_mode`

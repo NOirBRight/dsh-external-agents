@@ -1,6 +1,7 @@
 /** Generic Delegation Tool. Routes to the Default Adapter or an explicit one. */
 
 import type { Context } from '@deepseek-ai/cordis'
+import type {} from '@deepseek-ai/dsh-jobs'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { ADAPTER_IDS, GENERIC_TOOL_NAME } from './catalog.ts'
 import { resolveDelegationTarget, type Exposure } from './exposure.ts'
@@ -11,7 +12,7 @@ import {
 } from './worker-runner.ts'
 
 /** Register the generic delegate_worker tool against the current Exposure. */
-export function registerDelegateWorker(ctx: Context, exposure: Exposure): (() => void) | void {
+export function registerDelegateWorker(ctx: Context, exposure: Exposure): () => void {
   return ctx.tools.register(defineTool({
     name: GENERIC_TOOL_NAME,
     description:

@@ -47,8 +47,6 @@ const client: UserConfig = {
       '@deepseek-ai/cordis',
       '@deepseek-ai/dsh-client-connection/client',
       '@deepseek-ai/dsh-client-locale/client',
-      '@deepseek-ai/dsh-client-ui-conversation/client',
-      '@deepseek-ai/dsh-client-ui-primitives',
       '@deepseek-ai/dsh-client-ui-settings/client',
       '@deepseek-ai/dsh-client-ui-slots',
     ],

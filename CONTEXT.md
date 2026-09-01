@@ -86,3 +86,4 @@ Exposure 的唯一主人是设置页，不是 YAML 里的 `disabled: true` 预�
 3. 父模型只看见最终文本或明确失败，看不见产品内部的推理、工具轨迹或 diff。
 4. 产品会话 id 不写入父 Session，也不能用来续聊。
 5. 本插件不把第三方产品当作 DSH 的 LLM 供应商。
+6. `dsh-scope` 和 `dsh-tool-subagent` 由 Host 模块表提供；插件只能声明为 peer，不能把独立副本装入 Profile，否则作用域身份会分裂并使 Agent Preset 校验失败。

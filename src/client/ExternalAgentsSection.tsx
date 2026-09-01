@@ -291,22 +291,33 @@ function AdapterCard(props: {
   onLocate: () => void
 }): JSX.Element {
   const { card, row, probe, inUse, t, onPickDefault, onChange, onLocate } = props
+  const enabled = row.enabled === true
   const missing = probe?.found !== true
+  const status = !enabled ? t('disabledBadge') : missing ? t('missingBadge') : t('enabledBadge')
   return (
-    <li style={cardShell(inUse, missing)}>
+    <li style={cardShell(inUse, missing || !enabled)}>
       <button
         type='button'
-        style={{ ...headBtn, cursor: inUse ? 'default' : 'pointer' }}
+        style={{ ...headBtn, cursor: inUse || !enabled ? 'default' : 'pointer' }}
         aria-pressed={inUse}
-        disabled={inUse}
+        disabled={inUse || !enabled}
         aria-label={(inUse ? t('inUse') : t('setDefault')) + ': ' + card.displayName}
         onClick={onPickDefault}
       >
         <BrandIcon id={card.id} />
         <span style={nameStyle}>{card.displayName}</span>
-        <span style={badge}>{missing ? t('missingBadge') : t('enabledBadge')}</span>
+        <span style={badge}>{status}</span>
         {inUse ? <span style={inUseBadge}>{t('inUse')}</span> : null}
       </button>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0 16px 8px', fontSize: 13, color: 'var(--dsw-alias-label-secondary)' }}>
+        <input
+          type='checkbox'
+          checked={enabled}
+          aria-label={(enabled ? t('disableAdapter') : t('enableAdapter')) + ': ' + card.displayName}
+          onChange={() => onChange({ ...row, enabled: !enabled }, true)}
+        />
+        {enabled ? t('enabledBadge') : t('disabledBadge')}
+      </label>
       <div style={foot}>
         <div style={meta}>{[probe?.version, loginText(probe, t)].filter(Boolean).join(' · ')}</div>
         {missing ? (
@@ -351,11 +362,15 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
   const [probes, setProbes] = useState<Partial<Record<AdapterId, AdapterProbe>>>({})
   const [probing, setProbing] = useState(true)
   const [error, setError] = useState<string | undefined>(undefined)
+  const loadRef = useRef(load)
+  const probeRef = useRef(probe)
+  loadRef.current = load
+  probeRef.current = probe
 
   useEffect(() => {
     let cancelled = false
     const started = Date.now()
-    void load().then(async (next) => {
+    void loadRef.current().then(async (next) => {
       if (cancelled) return
       setSnapshot(next)
       setDraft(next.config)
@@ -365,7 +380,7 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
         setProbing(false)
         return
       }
-      const fresh = await probe(false)
+      const fresh = await probeRef.current(false)
       const wait = 280 - (Date.now() - started)
       if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait))
       if (cancelled) return
@@ -378,7 +393,7 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
       }
     })
     return () => { cancelled = true }
-  }, [load, probe])
+  }, [])
 
   const persist = (next: Config): void => {
     setDraft(next)
@@ -442,7 +457,7 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
               card={card}
               row={draft.adapters?.[card.id] ?? {}}
               probe={probes[card.id]}
-              inUse={draft.defaultAdapter === card.id}
+              inUse={draft.defaultAdapter === card.id && draft.adapters?.[card.id]?.enabled === true}
               t={t}
               onPickDefault={() => persist({ ...draft, defaultAdapter: card.id })}
               onChange={(row) => setAdapter(card.id, row)}

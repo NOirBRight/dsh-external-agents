@@ -18,7 +18,7 @@ import {
 import type { UnattendedPolicy } from './print-json-argv.ts'
 
 export interface AdapterConfig {
-  /** When false, the named tool is unregistered. Omitted means on. */
+  /** Only an explicitly enabled Adapter is mounted and exposed. */
   enabled?: boolean
   /** Optional absolute path to the product executable. */
   path?: string
@@ -29,7 +29,7 @@ export interface AdapterConfig {
   env?: Record<string, string>
   /** P1 print-json workers: auto-approve (default) or fail closed. */
   unattended?: UnattendedPolicy
-  /** Optional product --model override. Empty means native default. */
+  /** Trimmed product model name; required when enabled and optional when disabled. */
   model?: string
   /** Agy --print-timeout in milliseconds. */
   printTimeoutMs?: number
@@ -59,7 +59,7 @@ export interface Exposure {
 }
 
 function isEnabled(config: Config, id: AdapterId): boolean {
-  return config.adapters?.[id]?.enabled !== false
+  return config.adapters?.[id]?.enabled === true
 }
 
 /** Resolve live named tools and the Default Adapter from plugin config. */
@@ -76,9 +76,10 @@ export function resolveExposure(config: Config): Exposure {
   }
   const enabledIds = named.map(row => row.adapter)
   const pinned = config.defaultAdapter
-  const defaultAdapter = pinned !== undefined && isImplementedAdapterId(pinned) && enabledIds.includes(pinned)
-    ? pinned
-    : enabledIds[0]
+  if (pinned !== undefined && (!isImplementedAdapterId(pinned) || !enabledIds.includes(pinned))) {
+    throw new TypeError(`defaultAdapter must name an enabled Adapter: ${pinned}`)
+  }
+  const defaultAdapter = pinned ?? enabledIds[0]
   return {
     named,
     defaultAdapter,

@@ -27,25 +27,21 @@ DSH 继续当编排器；第三方产品作为外部 Agent；设置页展示外�
 
 P0–P3 已在 lab 接线。技能 `delegate-product-worker` 只路由、不 spawn。
 
-## Plan 执行路由
+## Plan
 
-在干净的官方 DSH 0.1.1-rc.2 上，Plan Review 没有公开、安全的外部交接 seam。本插件因此失败关闭：外部 Agent 目标会显示但不可选，不回答或取消 Plan 问题，也不启动外部 Agent。既有 `plan.prepare` / `plan.commit` 名称仅为兼容保留并始终返回 fail-closed 错误。继续在 DSH 执行仍走官方批准答案；设置、探测、普通前台/后台委托和 Jobs 不受影响。
+本插件不拥有 Plan UI。外部 Agent 的 Plan 交接需要 DSH 官方提供已命名的委托 Plan 归属 seam；在该 seam 出现前，Plan 审查与执行完全由 DSH 内置能力负责。
 
-与 `dsh-composer-picker` v0.1.3 双装时，本插件以 priority `-6` 拥有顶层 `conversation.composer` 路由卡，并从包根导出插件拥有的 `external-agents.plan-review.continue-in-dsh` child-slot 契约。Composer 子项拥有 `ModelSelection` 草稿和官方 `ModelDirectory` 提交，并通过 plugin-owned `registerCommit` seam 注册执行提交；External Agents 只编排“Composer 提交模型 → 回答 Plan”。提交失败保留 Plan 并允许重试；无 Picker 时沿用当前 DSH 模型。rc.2 没有原子“选模型并回答”seam：若另一客户端在两步之间结算问题，模型切换无法由插件回滚；批准后的显式拒绝成为本地终态，transport 异常保持可重试。
-
-完整 shadow `exit_plan_mode` 当前未获 ADR 授权，不实现。未来只有 Core 提供公开、可验证的 delegated Plan resolution seam，或另开 ADR 批准 shadow 方案后，才恢复外部 Plan 交接。见 [ADR 0007](docs/adr/0007-plan-handoff-fails-closed.md)。
-
-## 安装（dsh-lab）
+## Development and lab verification
 
 本机验收装进 **dsh-lab**（`DSH_HOME=~/.dsh-lab`，GUI `http://127.0.0.1:3082`），不要改正在跑的 dsh-web。
 
-标准 `pnpm check` 可在本插件的独立 checkout 中完成 build、test 与 pack gate。发布矩阵另运行 `pnpm compat:check`，打包并组合加载本插件与 composer-picker；默认从相邻的 `../dsh-composer-picker` 读取兼容 checkout，工作区布局不同时用 `DSH_COMPOSER_PICKER_REPO=/absolute/path/to/dsh-composer-picker pnpm compat:check` 指定。该路径只用于跨包验证，不会加入运行时依赖。
+标准 `pnpm check` 在本插件的独立 checkout 中完成 build、test 与 pack gate。
 
 ```sh
 pnpm install
 pnpm check
 npm pack --ignore-scripts
-DSH_HOME=~/.dsh-lab dsh plugin --profile web add ./dsh-external-agents-0.1.0.tgz
+DSH_HOME=~/.dsh-lab dsh plugin --profile web add ./dsh-external-agents-0.2.1.tgz
 systemctl --user restart dsh-lab.service
 ```
 
@@ -55,7 +51,7 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
 
 ## P0 配置
 
-默认（本仓库 `cordis.patch.yml`）打开 Codex 与 Claude Code：
+默认（本仓库 `cordis.patch.yml`）打开四个 Adapter：
 
 ```yaml
 - id: external-agents
@@ -63,18 +59,60 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
     adapters:
       codex:
         enabled: true
+        model: gpt-5.6-luna
       claude-code:
         enabled: true
+        model: sonnet
       cursor:
         enabled: true
+        model: auto
       antigravity:
         enabled: true
+        model: gemini-3.7-flash-high
         env: {}
     defaultAdapter: codex
 ```
 
-每个 Adapter 的 `env` 只传给该外部 Agent。用户可以自己填 `HTTPS_PROXY` 等；本插件不内置、不公布任何代理端点。
+每个已启用 Adapter 必须填写去掉首尾空白后的非空 `model`；已禁用 Adapter 可以省略 `model`。`env` 只传给该外部 Agent。用户可以自己填 `HTTPS_PROXY` 等；本插件不内置、不公布任何代理端点。
 
 关掉某一个：在 profile 的 `cordis.patch.yml` 覆盖整份 config，把对应 `enabled` 设为 `false`。下一轮模型请求不再看到那把工具。
 
 后台任务出现在会话头 Job Panel（`kind: subagent`），不要找第二套任务 UI。
+
+
+## Release installation (Latest)
+
+External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. The release artifact targets DeepSeek Harness 0.1.2-alpha.1 and contains built Host/Client files only; it has no sibling-repository source, workstation path, link:, or workspace: dependency.
+
+Latest installation (the URL never contains a version):
+
+~~~sh
+dsh plugin --profile web add --force \
+  https://github.com/NOirBRight/dsh-external-agents/releases/latest/download/dsh-external-agents.tgz
+~~~
+
+Fixed-version installation:
+
+~~~sh
+dsh plugin --profile web add --force \
+  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.1/dsh-external-agents.tgz
+~~~
+
+Update, uninstall, and verify:
+
+~~~sh
+# Update to the latest Release
+dsh plugin --profile web add --force \
+  https://github.com/NOirBRight/dsh-external-agents/releases/latest/download/dsh-external-agents.tgz
+# Verify the loaded version
+dsh plugin --profile web list
+dsh plugin --profile web doctor
+# Uninstall only this plugin
+dsh plugin --profile web remove dsh-external-agents
+~~~
+
+Configuration: use the plugin section in Settings for Web UI plugins, or the profile dsh.profile.bundles entry for Host-only plugins. Start with this README's minimal YAML/JSON example and provide credentials/backend addresses explicitly.
+
+Rollback: rerun the fixed v0.2.1 command, verify the profile list, then restart the Web service once. Inspect journalctl --user -u dsh-web.service and dsh plugin --profile web doctor; never put a source checkout in the production profile.
+
+Release and integrity: [v0.2.1](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.1) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.1/SHA256SUMS).

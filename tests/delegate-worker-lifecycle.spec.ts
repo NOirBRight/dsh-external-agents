@@ -56,7 +56,7 @@ function bench(run: Record<string, unknown>) {
       }),
     },
     subagents,
-    get: vi.fn((name: string) => name === 'jobs' ? jobs : undefined),
+    jobs,
   }
   registerDelegateWorker(ctx as never, exposure)
   if (tool === undefined) throw new Error('delegate_worker was not registered')
@@ -121,6 +121,14 @@ describe('delegate_worker lifecycle through its registered tool', () => {
     expect(dispose).toHaveBeenCalledOnce()
   })
 
+  it('cleanup via dispose is idempotent', async () => {
+    const dispose = vi.fn(async () => undefined)
+    const { tool } = bench({ id: 'run-dispose', result: Promise.resolve({ stopReason: 'completed', output: [] }), dispose })
+    await tool.execute(args, { agent: parent, signal: new AbortController().signal })
+    await expect(dispose).toHaveBeenCalled()
+    await expect((await import('../src/worker-runner.ts')).outputValueText([{ type: 'text', text: 'x' }])).toBe('x')
+  })
+
   it('maps cancellation during background startup to killed', async () => {
     let tool: RegisteredTool | undefined
     let job: JobRegistration | undefined
@@ -132,7 +140,7 @@ describe('delegate_worker lifecycle through its registered tool', () => {
     }
     const ctx = {
       tools: { register: (registered: RegisteredTool) => { tool = registered } },
-      get: () => jobs,
+      jobs,
       subagents: {
         start: vi.fn(async (_provider: string, request: { signal: AbortSignal }) => new Promise((_, reject) => {
           request.signal.addEventListener('abort', () => reject(new Error('startup aborted')), { once: true })

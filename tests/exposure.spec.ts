@@ -11,10 +11,12 @@ const bothEnabled = {
 }
 
 describe('resolveExposure', () => {
-  it('turns every Adapter on when the config omits enabled', () => {
-    expect(resolveExposure({}).named.map(row => row.adapter)).toEqual([
-      'codex', 'claude-code', 'cursor', 'antigravity',
-    ])
+  it('keeps every Adapter disabled when enabled is omitted', () => {
+    expect(resolveExposure({})).toEqual({
+      named: [],
+      defaultAdapter: undefined,
+      delegateWorker: false,
+    })
   })
 
   it('registers no tools when every Adapter is off', () => {
@@ -63,8 +65,8 @@ describe('resolveExposure', () => {
     }).defaultAdapter).toBe('claude-code')
   })
 
-  it('falls back when the pin is disabled', () => {
-    expect(resolveExposure({
+  it('rejects a pinned Adapter when it is disabled', () => {
+    expect(() => resolveExposure({
       adapters: {
         codex: { enabled: false },
         'claude-code': { enabled: true },
@@ -72,7 +74,7 @@ describe('resolveExposure', () => {
         antigravity: { enabled: false },
       },
       defaultAdapter: 'codex',
-    }).defaultAdapter).toBe('claude-code')
+    })).toThrow(/enabled Adapter/)
   })
 
   it('exposes Cursor and Antigravity tools when those Adapters are enabled', () => {

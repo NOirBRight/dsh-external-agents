@@ -72,6 +72,74 @@ export function decodeConfig(value: unknown): Config | undefined {
   }
 }
 
+/** Validate a config before it is mounted or persisted. */
+export function validateConfig(value: unknown): Config {
+  const record = asRecord(value)
+  if (record === undefined) throw new TypeError('external-agents config must be an object')
+  const adaptersRecord = record.adapters === undefined ? undefined : asRecord(record.adapters)
+  if (record.adapters !== undefined && adaptersRecord === undefined) {
+    throw new TypeError('external-agents config.adapters must be an object')
+  }
+  const adapters: NonNullable<Config['adapters']> = {}
+  if (adaptersRecord !== undefined) {
+    for (const [rawId, rawAdapter] of Object.entries(adaptersRecord)) {
+      if (!isAdapterId(rawId)) throw new TypeError('external-agents config.adapters has unknown Adapter ' + JSON.stringify(rawId))
+      if (rawAdapter === undefined) continue
+      const adapter = asRecord(rawAdapter)
+      if (adapter === undefined) throw new TypeError('external-agents config.adapters.' + rawId + ' must be an object')
+      const enabled = adapter.enabled
+      if (enabled !== undefined && typeof enabled !== 'boolean') throw new TypeError('external-agents config.adapters.' + rawId + '.enabled must be boolean')
+      const path = adapter.path
+      if (path !== undefined && typeof path !== 'string') throw new TypeError('external-agents config.adapters.' + rawId + '.path must be string')
+      const model = adapter.model
+      if (model !== undefined && typeof model !== 'string') throw new TypeError('external-agents config.adapters.' + rawId + '.model must be string')
+      const normalizedModel = model === undefined ? undefined : model.trim()
+      if (enabled === true && (normalizedModel === undefined || normalizedModel.length === 0)) {
+        throw new TypeError('external-agents config.adapters.' + rawId + '.model must be a non-empty string when enabled')
+      }
+      const unattended = adapter.unattended
+      if (unattended !== undefined && unattended !== 'auto' && unattended !== 'strict') {
+        throw new TypeError('external-agents config.adapters.' + rawId + '.unattended must be \"auto\" or \"strict\"')
+      }
+      const printTimeoutMs = adapter.printTimeoutMs
+      if (printTimeoutMs !== undefined && (typeof printTimeoutMs !== 'number' || !Number.isFinite(printTimeoutMs) || printTimeoutMs <= 0)) {
+        throw new TypeError('external-agents config.adapters.' + rawId + '.printTimeoutMs must be a positive finite number')
+      }
+      const env = adapter.env
+      if (env !== undefined) {
+        const envRecord = asRecord(env)
+        if (envRecord === undefined || Object.entries(envRecord).some(([, item]) => typeof item !== 'string')) {
+          throw new TypeError('external-agents config.adapters.' + rawId + '.env must contain only string values')
+        }
+      }
+      adapters[rawId] = {
+        ...enabled === undefined ? {} : { enabled },
+        ...path === undefined ? {} : { path },
+        ...normalizedModel === undefined ? {} : { model: normalizedModel },
+        ...unattended === undefined ? {} : { unattended },
+        ...printTimeoutMs === undefined ? {} : { printTimeoutMs },
+        ...env === undefined ? {} : { env: { ...(env as Record<string, string>) } },
+      }
+    }
+  }
+  const defaultAdapter = record.defaultAdapter
+  if (defaultAdapter !== undefined && (typeof defaultAdapter !== 'string' || !isAdapterId(defaultAdapter))) {
+    throw new TypeError('external-agents config.defaultAdapter must be a known Adapter')
+  }
+  if (defaultAdapter !== undefined && adapters[defaultAdapter]?.enabled !== true) {
+    throw new TypeError('external-agents config.defaultAdapter must name an enabled Adapter')
+  }
+  return {
+    ...Object.keys(adapters).length > 0 ? { adapters } : {},
+    ...defaultAdapter === undefined ? {} : { defaultAdapter },
+  }
+}
+
+/** Resolve and normalize a config before mounting or persisting it. */
+export function resolveConfig(value: unknown): Config {
+  return validateConfig(value)
+}
+
 export function mergeConfig(base: Config, overlay: Config | undefined): Config {
   if (overlay === undefined) return base
   const adapters: NonNullable<Config['adapters']> = { ...base.adapters }
