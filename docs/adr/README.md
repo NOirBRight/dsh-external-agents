@@ -8,4 +8,5 @@
 | [0004](0004-shipped-adapter-set.md) | 出厂四个 Adapter |
 | [0005](0005-unattended-auto-approve.md) | 无人值守默认自动批准 |
 | [0006](0006-routing-skill.md) | 技能只路由，不 spawn |
-| [0007](0007-plan-handoff-fails-closed.md) | Plan 外部交接在无公开 seam 时失败关闭 |
+
+> 外部 Agent 的 Plan 交接需要 DSH 官方提供已命名的委托 Plan 归属 seam；在该 seam 出现前，本插件不拥有 Plan UI。现行说明见 [产品规格](../spec.md)。

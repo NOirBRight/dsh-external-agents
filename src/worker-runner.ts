@@ -2,6 +2,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
+import type {} from '@deepseek-ai/dsh-jobs'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm'
 import type { JsonValue } from '@deepseek-ai/dsh-session'
 import { settleRun, type SubagentResult, type SubagentRun } from '@deepseek-ai/dsh-subagent'
@@ -96,7 +97,7 @@ export async function startForegroundProductWorker(
 }
 
 export function startBackgroundProductWorker(ctx: Context, request: ProductWorkerRequest): string {
-  const jobs = ctx.get('jobs')
+  const jobs = ctx.jobs
   if (jobs === undefined) throw new Error('后台 Job 不可用：需要加载 @deepseek-ai/dsh-jobs')
   return jobs.start({
     kind: 'subagent',

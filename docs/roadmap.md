@@ -6,7 +6,7 @@
 
 状态：**lab 已验收**（陷阱见 [notes/p0-lab.md](notes/p0-lab.md)）。
 
-目标：设置尚未做完之前，也能在本机跑通 Codex 与 Claude Code。
+目标：在 dsh-lab 上通过本插件跑通 Codex 与 Claude Code。
 
 - 插件骨架：`package.json`、`cordis.patch.yml`、host `apply`。
 - 作为依赖挂载 `@deepseek-ai/dsh-subagent-codex`、`@deepseek-ai/dsh-subagent-claude-code`。
@@ -48,4 +48,4 @@
 - 产品会话续聊
 - 替代 Job Panel
 - Cursor 私有 HTTP
-- 在 DSH 没有公开 delegated Plan resolution seam 时实现外部 Plan 交接或完整 shadow `exit_plan_mode`（见 ADR 0007）
+- 在 DSH 没有公开 delegated Plan resolution seam 时，本插件不提供 Plan 交接或完整 shadow `exit_plan_mode`

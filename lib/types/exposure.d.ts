@@ -6,7 +6,7 @@
 import { type AdapterId, type ImplementedAdapterId } from './catalog.ts';
 import type { UnattendedPolicy } from './print-json-argv.ts';
 export interface AdapterConfig {
-    /** When false, the named tool is unregistered. Omitted means on. */
+    /** Only an explicitly enabled Adapter is mounted and exposed. */
     enabled?: boolean;
     /** Optional absolute path to the product executable. */
     path?: string;
@@ -17,7 +17,7 @@ export interface AdapterConfig {
     env?: Record<string, string>;
     /** P1 print-json workers: auto-approve (default) or fail closed. */
     unattended?: UnattendedPolicy;
-    /** Optional product --model override. Empty means native default. */
+    /** Trimmed product model name; required when enabled and optional when disabled. */
     model?: string;
     /** Agy --print-timeout in milliseconds. */
     printTimeoutMs?: number;

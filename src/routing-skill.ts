@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
+import type { SkillRegistration } from '@deepseek-ai/dsh-skill'
+import type {} from '@deepseek-ai/dsh-skill'
 
 const SKILL_REL = join('skills', 'delegate-product-worker', 'SKILL.md')
 
@@ -29,19 +31,22 @@ export function parseSkillMarkdown(raw: string): { name: string, description: st
   return { name, description, content }
 }
 
+/** Register the routing skill when the optional skill registry is available. */
 export function registerRoutingSkill(ctx: Context): void {
-  const skills = ctx.get('skills') as
-    | { register: (skill: { name: string, description: string, source: 'runtime', content: string }) => (() => void) | void }
-    | undefined
+  const skills = ctx.get('skills')
   if (skills === undefined) {
-    ctx.logger.info('external-agents: skills registry missing; routing skill not registered')
+    ctx.logger.warn('external-agents: skill capability unavailable; load @deepseek-ai/dsh-skill to register delegate-product-worker')
     return
   }
   const parsed = parseSkillMarkdown(readFileSync(routingSkillPath(), 'utf8'))
-  skills.register({
+  const registration: SkillRegistration = {
     name: parsed.name,
     description: parsed.description,
     source: 'runtime',
     content: parsed.content,
-  })
+  }
+  ctx.effect(
+    () => skills.register(registration),
+    'external-agents: routing skill',
+  )
 }

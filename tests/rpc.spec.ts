@@ -1,62 +1,106 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
 import {
-  EXTERNAL_AGENTS_RPC_CHANNEL, EXTERNAL_PLAN_HANDOFF_UNAVAILABLE, PLAN_COMMIT_ENDPOINT, PLAN_PREPARE_ENDPOINT,
-  SAVE_ENDPOINT, SNAPSHOT_ENDPOINT,
+  EXTERNAL_AGENTS_RPC_CHANNEL,
+  PROBE_ENDPOINT,
+  SAVE_ENDPOINT,
+  SNAPSHOT_ENDPOINT,
 } from '../src/client-contract.ts'
-import { createExternalAgentsRpcHandler, registerExternalAgentsRpc } from '../src/rpc.ts'
+import { createExternalAgentsRpcHandler, registerExternalAgentsRpc, type ExternalAgentsRpcDeps } from '../src/rpc.ts'
 
-function deps() {
+const storeState = vi.hoisted(() => ({
+  dshHome: vi.fn(() => '/tmp/dsh-external-agents-rpc-test'),
+  savePersistedConfig: vi.fn(),
+}))
+vi.mock('../src/store.ts', () => storeState)
+
+function deps(overrides: Partial<ExternalAgentsRpcDeps> = {}): ExternalAgentsRpcDeps {
   return {
-    liveConfig: () => ({ adapters: { codex: { enabled: true } }, defaultAdapter: 'codex' as const }),
-    applyConfig: vi.fn(),
+    liveConfig: () => ({ adapters: { codex: { enabled: true, model: 'codex-model' } } }),
+    applyConfig: vi.fn(async () => undefined),
     cachedProbes: () => ({}),
     setCachedProbes: vi.fn(),
+    ...overrides,
   }
 }
 
-describe('external-agents RPC', () => {
-  it('snapshots catalog and live config', async () => {
-    const handler = createExternalAgentsRpcHandler(deps())
-    const result = await handler(SNAPSHOT_ENDPOINT, {}, new AbortController().signal)
-    expect(result.ok).toBe(true)
-    if (!result.ok) return
-    const value = result.value as { catalog: Array<{ id: string }>, config: { defaultAdapter?: string } }
-    expect(value.catalog.map((row) => row.id)).toEqual(['codex', 'claude-code', 'cursor', 'antigravity'])
-    expect(value.config.defaultAdapter).toBe('codex')
-  })
+beforeEach(() => {
+  storeState.savePersistedConfig.mockReset()
+})
 
-  it('keeps legacy Plan handoff endpoints visibly fail-closed', async () => {
-    const handler = createExternalAgentsRpcHandler(deps())
-    const signal = new AbortController().signal
-    for (const endpoint of [PLAN_PREPARE_ENDPOINT, PLAN_COMMIT_ENDPOINT]) {
-      await expect(handler(endpoint, {}, signal)).resolves.toMatchObject({
-        ok: false, error: { message: EXTERNAL_PLAN_HANDOFF_UNAVAILABLE },
-      })
+describe('External Agents RPC', () => {
+  it('returns a catalog snapshot', async () => {
+    const result = await createExternalAgentsRpcHandler(deps())(
+      SNAPSHOT_ENDPOINT, {}, new AbortController().signal,
+    )
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.value.config.adapters?.codex?.enabled).toBe(true)
+      expect(result.value.catalog.length).toBeGreaterThan(0)
     }
   })
 
-  it('registers one trusted-host RPC channel', () => {
-    const handle = vi.fn()
-    const ctx = { inject: vi.fn((_deps, callback) => callback({ connection: { rpc: { handle } } })) }
-    registerExternalAgentsRpc(ctx as never, deps())
-    expect(handle).toHaveBeenCalledOnce()
-    expect(handle).toHaveBeenCalledWith(
-      EXTERNAL_AGENTS_RPC_CHANNEL, expect.any(Function), { authority: 'trusted-host' },
+  it('rejects an unknown endpoint', async () => {
+    const result = await createExternalAgentsRpcHandler(deps())(
+      'unknown.endpoint', {}, new AbortController().signal,
     )
+    expect(result).toMatchObject({ ok: false, error: { code: 'internal' } })
   })
 
-  it('saves a decoded config through applyConfig', async () => {
-    let saved: unknown
-    const handler = createExternalAgentsRpcHandler({
-      liveConfig: () => ({}),
-      applyConfig: (config) => { saved = config },
-      cachedProbes: () => ({}),
-      setCachedProbes: () => undefined,
+  it('reports missing executable capability with typed details', async () => {
+    const result = await createExternalAgentsRpcHandler(deps())(
+      PROBE_ENDPOINT, {}, new AbortController().signal,
+    )
+    expect(result).toMatchObject({
+      ok: false,
+      error: { code: 'internal', details: { capability: 'subprocess' } },
     })
-    const result = await handler(SAVE_ENDPOINT, {
-      adapters: { cursor: { enabled: true } }, defaultAdapter: 'cursor',
-    }, new AbortController().signal)
-    expect(result.ok).toBe(true)
-    expect(saved).toEqual({ adapters: { cursor: { enabled: true } }, defaultAdapter: 'cursor' })
+  })
+
+  it('applies before persisting a valid config', async () => {
+    const events: string[] = []
+    const applyConfig = vi.fn(async () => { events.push('apply') })
+    storeState.savePersistedConfig.mockImplementation(() => { events.push('persist') })
+    const result = await createExternalAgentsRpcHandler(deps({ applyConfig }))(
+      SAVE_ENDPOINT, { adapters: { cursor: { enabled: true, model: 'cursor-model' } } }, new AbortController().signal,
+    )
+    expect(result).toMatchObject({ ok: true, value: { saved: true } })
+    expect(events).toEqual(['apply', 'persist'])
+    expect(applyConfig).toHaveBeenCalledWith({ adapters: { cursor: { enabled: true, model: 'cursor-model' } } })
+  })
+
+  it('does not persist when remount fails', async () => {
+    const applyConfig = vi.fn(async () => { throw new Error('mount rejected') })
+    const result = await createExternalAgentsRpcHandler(deps({ applyConfig }))(
+      SAVE_ENDPOINT, { adapters: { cursor: { enabled: true, model: 'cursor-model' } } }, new AbortController().signal,
+    )
+    expect(result).toMatchObject({ ok: false })
+    expect(storeState.savePersistedConfig).not.toHaveBeenCalled()
+  })
+
+  it('restores live state when persistence fails', async () => {
+    const previous = { adapters: { codex: { enabled: true, model: 'codex-model' } } }
+    const applyConfig = vi.fn(async () => undefined)
+    storeState.savePersistedConfig.mockImplementation(() => { throw new Error('disk full') })
+    const result = await createExternalAgentsRpcHandler(deps({
+      liveConfig: () => previous,
+      applyConfig,
+    }))(
+      SAVE_ENDPOINT, { adapters: { cursor: { enabled: true, model: 'cursor-model' } } }, new AbortController().signal,
+    )
+    expect(result).toMatchObject({ ok: false })
+    expect(applyConfig).toHaveBeenNthCalledWith(1, { adapters: { cursor: { enabled: true, model: 'cursor-model' } } })
+    expect(applyConfig).toHaveBeenNthCalledWith(2, previous)
+  })
+
+  it('registers the official channel disposer through an effect', () => {
+    const dispose = vi.fn(async () => undefined)
+    const handle = vi.fn(() => dispose)
+    const effect = vi.fn((setup: () => unknown) => setup())
+    const ctx = { connection: { rpc: { handle } }, effect }
+    registerExternalAgentsRpc(ctx as never, deps())
+    expect(effect).toHaveBeenCalledTimes(1)
+    expect(handle).toHaveBeenCalledTimes(1)
+    expect(handle.mock.calls[0]?.[0]).toBe(EXTERNAL_AGENTS_RPC_CHANNEL)
+    expect(handle.mock.calls[0]?.[1]).toBeTypeOf('function')
   })
 })

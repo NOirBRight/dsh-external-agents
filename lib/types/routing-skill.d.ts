@@ -6,4 +6,5 @@ export declare function parseSkillMarkdown(raw: string): {
     description: string;
     content: string;
 };
+/** Register the routing skill when the optional skill registry is available. */
 export declare function registerRoutingSkill(ctx: Context): void;

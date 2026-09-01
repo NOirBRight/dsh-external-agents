@@ -1,4 +1,4 @@
-# P0 lab 陷阱
+# P0 lab 陷阱（历史记录，2026-08-31）
 
 验收只走 **3082 / `~/.dsh-lab`**。3080 / `~/.dsh` 是 production，只读。
 
@@ -11,7 +11,7 @@
 ## 陷阱
 
 1. **「没有自动批准」说的是 DSH 包，不是 `claude` CLI。**  
-   `claude --help` 有 `--dangerously-skip-permissions` 和 `--permission-mode`。官方提供方 `0.0.1-rc.1` 不传这些。SDK 默认 `permissionMode: 'default'`。旗标以 [cli-contracts](../reference/cli-contracts.md) 为准。
+   `claude --help` 有 `--dangerously-skip-permissions` 和 `--permission-mode`。官方提供方 `0.1.2-alpha.1` 传 `model`，权限策略默认 `permissionMode: 'dontAsk'`。旗标以 [cli-contracts](../reference/cli-contracts.md) 为准。
 
 2. **原生 opus 在 SDK 里是 claude-opus-5，会 529 Overloaded。**  
    第一次 lab 委托失败被收成 `Error: subagent run failed`。同机 `claude -p --model sonnet` 和仓库 `.claude/settings.local.json`（`model: sonnet`）都能通。不要改 `~/.claude/settings.json` 的全局 opus。
@@ -38,6 +38,6 @@
 
 9. **Agy 前台+后台已通（3082）。** 前台 `worker_antigravity` → `P1_AGY_OK`；后台注册 `subagent-1`（`kind: subagent`）。父模型用 `ollama-cloud` / `glm-5.2`。
 
-## 下一步（P2）
+## 相关设计（P2）
 
 见 [roadmap](../roadmap.md)：设置「外部 Agent」分区。不要开自定义 CLI Adapter。

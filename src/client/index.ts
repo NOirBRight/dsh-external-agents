@@ -1,10 +1,11 @@
 /** Browser half: External Agents page inside Settings. */
 
-import type { ClientContext } from './shim.js'
-import type { ComposerChainProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { Context } from '@deepseek-ai/cordis'
 import type { ConnectionHandle } from '@deepseek-ai/dsh-client-connection/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
+import type {} from '@deepseek-ai/dsh-client-ui-slots'
 
 import {
   EXTERNAL_AGENTS_RPC_CHANNEL,
@@ -18,13 +19,11 @@ import type { AdapterId } from '../catalog.ts'
 import type { AdapterProbe } from '../client-contract.ts'
 import { decodeConfig } from '../config-codec.ts'
 import { ExternalAgentsSection } from './ExternalAgentsSection.tsx'
-import { CONTINUE_IN_DSH_SLOT, ExternalPlanReviewCard, type ExternalPlanReviewFace } from './ExternalPlanReviewCard.tsx'
-import { selectPlanReview } from './plan-review.ts'
 import type { ExternalAgentsFace } from './ExternalAgentsSection.tsx'
 import { en, zh, type ExternalAgentsKey } from './locales.ts'
 
-export { CONTINUE_IN_DSH_SLOT } from './ExternalPlanReviewCard.tsx'
-export type { ContinueInDshOwner, PlanExternalAgentTarget, PlanTargetId, PlanWorkerTarget } from './ExternalPlanReviewCard.tsx'
+/** Client context uses the official browser ConnectionHandle provided by the client plugin. */
+type ClientContext = Omit<Context, 'connection'> & { readonly connection: ConnectionHandle }
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -42,7 +41,7 @@ export function apply(ctx: ClientContext): void {
     'dsh-external-agents: Settings page copy',
   )
   const t = ctx.locale.bind(localeNamespace) as ExternalAgentsFace['t']
-  const { rpc } = ctx.get('connection') as unknown as ConnectionHandle
+  const { rpc } = ctx.connection
   const load: ExternalAgentsFace['load'] = async () => {
     const result = await rpc.call(EXTERNAL_AGENTS_RPC_CHANNEL, SNAPSHOT_ENDPOINT, {}, undefined)
     if (!result.ok) throw new Error(result.error.message)
@@ -58,16 +57,6 @@ export function apply(ctx: ClientContext): void {
     return value.probes ?? {}
   }
 
-  const loadPlanTargets = async (): Promise<import('../client-contract.ts').ExternalAgentsSnapshot> => {
-    const snapshot = await load()
-    try {
-      const probes = await probe(false)
-      return { ...snapshot, probes }
-    } catch {
-      return snapshot
-    }
-  }
-
   const pick: ExternalAgentsFace['pick'] = async () => {
     const result = await rpc.call(EXTERNAL_AGENTS_RPC_CHANNEL, PICK_ENDPOINT, {}, undefined)
     if (!result.ok) throw new Error(result.error.message)
@@ -75,25 +64,12 @@ export function apply(ctx: ClientContext): void {
     return value.path ?? null
   }
 
-
   const save: ExternalAgentsFace['save'] = async (config) => {
-    const payload = decodeConfig(config) ?? config
+    const payload = decodeConfig(config)
+    if (payload === undefined) throw new Error(t('failed'))
     const result = await rpc.call(EXTERNAL_AGENTS_RPC_CHANNEL, SAVE_ENDPOINT, payload, undefined)
     if (!result.ok) throw new Error(result.error.message)
   }
-
-  ctx.inject(['slots'], (scope: ClientContext) => {
-    scope.slots.inject('conversation.composer', () => scope.slots.register({
-      name: 'conversation.composer',
-      locale: localeNamespace,
-      priority: -6,
-      select: (owner: ComposerChainProps) => selectPlanReview(owner),
-      children: {
-        [CONTINUE_IN_DSH_SLOT]: { kind: 'single', scope: 'session' },
-      },
-      inject: (): ExternalPlanReviewFace => ({ loadTargets: loadPlanTargets }),
-    }, ExternalPlanReviewCard))
-  })
 
   ctx.slots.inject('settings.section', () => ctx.slots.register({
     name: 'settings.section',
