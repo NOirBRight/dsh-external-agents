@@ -15,6 +15,8 @@ DeepSeek Harness 的 **外部 Agent（Product Worker）控制面**：让本机�
 
 DSH 继续当编排器；第三方产品作为外部 Agent；设置页展示外部 Agent；Job Panel 展示后台任务。
 
+兼容性：本版本精确要求 DeepSeek Harness `0.1.2-alpha.4` 与 `@deepseek-ai/cordis@4.0.2`，不兼容 Alpha.1–Alpha.3。旧 Runtime 用户请继续使用对应 Runtime 的最后一个插件 tag。
+
 ## 不是什么
 
 - 不是 `dsh-llm-cursor` 那种把 Cursor 私有接口当父模型的供应商。
@@ -82,7 +84,7 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
 
 ## Release installation (Latest)
 
-External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. The release artifact targets DeepSeek Harness 0.1.2-alpha.1 and contains built Host/Client files only; it has no sibling-repository source, workstation path, link:, or workspace: dependency.
+External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. The release artifact targets DeepSeek Harness 0.1.2-alpha.4 and contains built Host/Client files only; it has no sibling-repository source, workstation path, link:, or workspace: dependency.
 
 Latest installation (the URL never contains a version):
 
@@ -115,4 +117,4 @@ Configuration: use the plugin section in Settings for Web UI plugins, or the pro
 
 Rollback: rerun the fixed v0.2.1 command, verify the profile list, then restart the Web service once. Inspect journalctl --user -u dsh-web.service and dsh plugin --profile web doctor; never put a source checkout in the production profile.
 
-Release and integrity: [v0.2.1](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.1) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.1/SHA256SUMS).
+Release and integrity: [v0.2.2](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.2) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.2/SHA256SUMS).

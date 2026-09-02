@@ -23,7 +23,7 @@
   - `-p --output-format json`
   - `--model <alias|full>`（`sonnet` / `opus` / 全名）
   - `--debug-file <path>`（隐式开 debug）
-- **DSH 官方提供方使用 alpha1 的受限选项。** `@deepseek-ai/dsh-subagent-claude-code@0.1.2-alpha.1` 可接收 `model` 与 `permissionMode`；本插件只转发设置页提供的 `model`，权限策略保持提供方的 `dontAsk` 默认值，不伪造审批。
+- **DSH 官方提供方使用 Alpha.4 的受限选项。** `@deepseek-ai/dsh-subagent-claude-code@0.1.2-alpha.4` 可接收 `model` 与 `permissionMode`；本插件只转发设置页提供的 `model`，权限策略保持提供方的 `dontAsk` 默认值，不伪造审批。
 - 本插件按 [ADR 0005](../adr/0005-unattended-auto-approve.md) 不在包装层伪造批准；官方提供方拒绝审批时保持失败。
 - 模型：已启用 Adapter 的设置页 `model` 去掉首尾空白后显式转发给提供方；已禁用 Adapter 可以不填写。原生 `~/.claude/settings.json` 的 `"model": "opus"` 本机落到 **claude-opus-5**。仓库可用 gitignore 的 `.claude/settings.local.json` 钉 `sonnet`（落到 **claude-sonnet-5**），只影响该 cwd。
 

@@ -105,8 +105,21 @@ function providerConfig(config: Config, id: AdapterId): Record<string, unknown> 
 }
 
 /** Mount one provider plugin and wait for its Cordis fiber to become active. */
-async function mountPlugin(scope: Scope, plugin: Plugin, config: Record<string, unknown>): Promise<void> {
-  await scope.ctx.plugin(plugin, config)
+async function mountPlugin(scope: Scope, plugin: Plugin, config: Record<string, unknown>, target: Context): Promise<void> {
+  const fiber = target.plugin(plugin, config)
+  try {
+    await fiber
+  } catch (error) {
+    if (typeof (fiber as { dispose?: unknown }).dispose === 'function') {
+      await (fiber as { dispose: () => Promise<void> | void }).dispose()
+    }
+    throw error
+  }
+  scope.ctx.effect(() => () => {
+    if (typeof (fiber as { dispose?: unknown }).dispose === 'function') {
+      return (fiber as { dispose: () => Promise<void> | void }).dispose()
+    }
+  }, 'external-agents: scoped plugin cleanup')
 }
 
 /**
@@ -141,7 +154,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
       } else {
         for (const [id, plugin] of providerPlugins) {
           if (validated.adapters?.[id]?.enabled !== true) continue
-          await mountPlugin(scope, plugin, providerConfig(validated, id))
+          await mountPlugin(scope, plugin, providerConfig(validated, id), ctx)
         }
       }
 
@@ -151,7 +164,7 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
             provider: row.provider,
             toolName: row.toolName,
             ...NAMED_TOOL_CONFIG,
-          })
+          }, ctx)
         }
         if (exposure.delegateWorker) {
           scope.ctx.effect(
@@ -174,26 +187,23 @@ export async function apply(ctx: Context, config: Config): Promise<void> {
   const remountNow = async (next: Config): Promise<void> => {
     const validated = resolveConfig(next)
     const previousScope = currentScope
-    let candidate: Scope | undefined
+    const previousConfig = live
+    if (previousScope !== undefined) {
+      await previousScope.dispose()
+      currentScope = undefined
+    }
     try {
-      candidate = await mountConfig(validated)
+      currentScope = await mountConfig(validated)
+      live = validated
     } catch (error) {
+      try {
+        currentScope = await mountConfig(previousConfig)
+        live = previousConfig
+      } catch (rollbackError) {
+        throw new AggregateError([error, rollbackError], 'external-agents: candidate mount failed and previous scope could not be restored')
+      }
       throw error
     }
-    if (previousScope !== undefined) {
-      try {
-        await previousScope.dispose()
-      } catch (disposeError) {
-        try {
-          await candidate.dispose()
-        } catch (candidateError) {
-          throw new AggregateError([disposeError, candidateError], 'external-agents: disposing previous scope failed and new candidate cleanup failed')
-        }
-        throw disposeError
-      }
-    }
-    currentScope = candidate
-    live = validated
   }
 
   const remount = (next: Config): Promise<void> => {

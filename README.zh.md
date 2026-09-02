@@ -82,7 +82,7 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
 
 ## 正式版安装（Latest）
 
-External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. 正式成品只支持 DeepSeek Harness 0.1.2-alpha.1；发布包只包含构建后的 Host/Client 产物，不包含兄弟仓库源码、本机路径或 link:/workspace: 依赖。
+External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. 正式成品只支持 DeepSeek Harness 0.1.2-alpha.4；发布包只包含构建后的 Host/Client 产物，不包含兄弟仓库源码、本机路径或 link:/workspace: 依赖。
 
 Latest 安装命令（永久不含版本号）：
 
@@ -115,4 +115,4 @@ dsh plugin --profile web remove dsh-external-agents
 
 回滚：重新执行固定版本 v0.2.1 命令，确认插件列表后只重启一次 Web 服务。失败时查看 journalctl --user -u dsh-web.service 与 dsh plugin --profile web doctor，不要把源码 checkout 写入 production profile。
 
-Release 与完整性：[v0.2.1](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.1) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.1/SHA256SUMS)。
+Release 与完整性：[v0.2.2](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.2) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.2/SHA256SUMS)。

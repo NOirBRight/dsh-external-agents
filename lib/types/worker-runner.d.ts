@@ -1,7 +1,7 @@
 /** Shared Product Worker execution for foreground and background delegation tools. */
 import type { Context } from '@deepseek-ai/cordis';
 import type { Agent } from '@deepseek-ai/dsh-agent';
-import type { JsonValue } from '@deepseek-ai/dsh-session';
+import type { JsonValue } from '@deepseek-ai/dsh-util-values';
 import { type SubagentRun } from '@deepseek-ai/dsh-subagent';
 export interface ProductWorkerRequest {
     provider: string;

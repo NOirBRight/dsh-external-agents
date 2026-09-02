@@ -7,8 +7,8 @@ describe('published package root', () => {
     const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8'))
     for (const name of ['@deepseek-ai/dsh-scope', '@deepseek-ai/dsh-tool-subagent']) {
       expect(manifest.dependencies).not.toHaveProperty(name)
-      expect(manifest.peerDependencies).toHaveProperty(name, '^0.1.2-alpha.1')
-      expect(manifest.devDependencies).toHaveProperty(name, '0.1.2-alpha.1')
+      expect(manifest.peerDependencies).toHaveProperty(name, '0.1.2-alpha.4')
+      expect(manifest.devDependencies).toHaveProperty(name, '0.1.2-alpha.4')
     }
   })
 

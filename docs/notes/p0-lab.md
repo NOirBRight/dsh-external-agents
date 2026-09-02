@@ -11,7 +11,7 @@
 ## 陷阱
 
 1. **「没有自动批准」说的是 DSH 包，不是 `claude` CLI。**  
-   `claude --help` 有 `--dangerously-skip-permissions` 和 `--permission-mode`。官方提供方 `0.1.2-alpha.1` 传 `model`，权限策略默认 `permissionMode: 'dontAsk'`。旗标以 [cli-contracts](../reference/cli-contracts.md) 为准。
+   `claude --help` 有 `--dangerously-skip-permissions` 和 `--permission-mode`。官方提供方 `0.1.2-alpha.4` 传 `model`，权限策略默认 `permissionMode: 'dontAsk'`。旗标以 [cli-contracts](../reference/cli-contracts.md) 为准。
 
 2. **原生 opus 在 SDK 里是 claude-opus-5，会 529 Overloaded。**  
    第一次 lab 委托失败被收成 `Error: subagent run failed`。同机 `claude -p --model sonnet` 和仓库 `.claude/settings.local.json`（`model: sonnet`）都能通。不要改 `~/.claude/settings.json` 的全局 opus。

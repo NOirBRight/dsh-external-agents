@@ -6,7 +6,7 @@
 
 ## 1. 要解决的问题
 
-DSH 0.1.2-alpha.1 已经有 Codex / Claude Code 的官方 Product Worker，但生产安装默认不带 provider，预设行是 `disabled: true`，用户要改 YAML、装包、复制预设，才能让模型看到工具。后台 one-shot 已经能进 Job Panel，但没有发现面。
+DSH 0.1.2-alpha.4 已经有 Codex / Claude Code 的官方 Product Worker，但生产安装默认不带 provider，预设行是 `disabled: true`，用户要改 YAML、装包、复制预设，才能让模型看到工具。后台 one-shot 已经能进 Job Panel，但没有发现面。
 
 同时：
 
