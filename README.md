@@ -11,11 +11,18 @@ DeepSeek Harness 的 **外部 Agent（Product Worker）控制面**：让本机�
 - [外部 CLI 契约](docs/reference/cli-contracts.md)
 - [P0 lab 陷阱](docs/notes/p0-lab.md)
 
+## Compatibility
+
+Verified runtimes are DeepSeek Harness `0.1.2-alpha.4` and `0.1.2-rc.1` on Cordis `4.0.2`; this record is evidence, not an allowlist.
+
+Unknown newer runtimes are attempted on a best-effort basis after one warning, and the plugin keeps its normal mount path.
+
+A reproduced failure is blocklisted only afterward; see the [compatibility records](package.json) for the affected version, reason, and evidence.
+
+
 ## 一句话
 
 DSH 继续当编排器；第三方产品作为外部 Agent；设置页展示外部 Agent；Job Panel 展示后台任务。
-
-兼容性：本版本精确要求 DeepSeek Harness `0.1.2-alpha.4` 与 `@deepseek-ai/cordis@4.0.2`，不兼容 Alpha.1–Alpha.3。旧 Runtime 用户请继续使用对应 Runtime 的最后一个插件 tag。
 
 ## 不是什么
 
@@ -81,7 +88,6 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
 
 后台任务出现在会话头 Job Panel（`kind: subagent`），不要找第二套任务 UI。
 
-
 ## Release installation (Latest)
 
 External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. The release artifact targets DeepSeek Harness 0.1.2-alpha.4 and contains built Host/Client files only; it has no sibling-repository source, workstation path, link:, or workspace: dependency.
@@ -97,7 +103,7 @@ Fixed-version installation:
 
 ~~~sh
 dsh plugin --profile web add --force \
-  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.1/dsh-external-agents.tgz
+  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/dsh-external-agents.tgz
 ~~~
 
 Update, uninstall, and verify:
@@ -117,4 +123,4 @@ Configuration: use the plugin section in Settings for Web UI plugins, or the pro
 
 Rollback: rerun the fixed v0.2.1 command, verify the profile list, then restart the Web service once. Inspect journalctl --user -u dsh-web.service and dsh plugin --profile web doctor; never put a source checkout in the production profile.
 
-Release and integrity: [v0.2.2](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.2) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.2/SHA256SUMS).
+Release and integrity: [v0.2.3](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.3) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/SHA256SUMS).

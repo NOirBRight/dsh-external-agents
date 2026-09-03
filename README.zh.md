@@ -11,6 +11,15 @@ DeepSeek Harness 的 **外部 Agent（Product Worker）控制面**：让本机�
 - [外部 CLI 契约](docs/reference/cli-contracts.md)
 - [P0 lab 陷阱](docs/notes/p0-lab.md)
 
+## 兼容性
+
+已验证运行时是 DeepSeek Harness `0.1.2-alpha.4` 与 `0.1.2-rc.1`（Cordis `4.0.2`）；这份记录只是证据，不是 allowlist。
+
+未知的新版本会先打一条 warning，再按正常挂载路径 best-effort 尝试，不会因为未验证而跳过。
+
+只有复现过的故障才会加入 blocklist；受影响版本、原因和证据见[兼容性记录](package.json)。
+
+
 ## 一句话
 
 DSH 继续当编排器；第三方产品作为外部 Agent；设置页展示外部 Agent；Job Panel 展示后台任务。
@@ -79,10 +88,9 @@ lab 安装必须使用 pack 后的 artifact；不要写源码 checkout alias、�
 
 后台任务出现在会话头 Job Panel（`kind: subagent`），不要找第二套任务 UI。
 
-
 ## 正式版安装（Latest）
 
-External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. 正式成品只支持 DeepSeek Harness 0.1.2-alpha.4；发布包只包含构建后的 Host/Client 产物，不包含兄弟仓库源码、本机路径或 link:/workspace: 依赖。
+External Agent control plane for Codex, Claude Code, Cursor Agent, and Antigravity adapters. 正式成品按上方兼容性记录运行；发布包只包含构建后的 Host/Client 产物，不包含兄弟仓库源码、本机路径或 link:/workspace: 依赖。
 
 Latest 安装命令（永久不含版本号）：
 
@@ -95,7 +103,7 @@ dsh plugin --profile web add --force \
 
 ~~~sh
 dsh plugin --profile web add --force \
-  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.1/dsh-external-agents.tgz
+  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/dsh-external-agents.tgz
 ~~~
 
 更新、卸载与验证：
@@ -115,4 +123,4 @@ dsh plugin --profile web remove dsh-external-agents
 
 回滚：重新执行固定版本 v0.2.1 命令，确认插件列表后只重启一次 Web 服务。失败时查看 journalctl --user -u dsh-web.service 与 dsh plugin --profile web doctor，不要把源码 checkout 写入 production profile。
 
-Release 与完整性：[v0.2.2](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.2) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.2/SHA256SUMS)。
+Release 与完整性：[v0.2.3](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.3) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/SHA256SUMS)。

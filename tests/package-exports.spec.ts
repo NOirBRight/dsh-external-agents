@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import * as published from 'dsh-external-agents'
 
+const DSH_RANGE = '>=0.1.2-alpha.4 <1.0.0 || 0.1.2-alpha.5 || 0.1.2-rc.1'
+
 describe('published package root', () => {
   it('keeps Host singleton modules on the platform module table', async () => {
     const fs = await import('node:fs')
     const manifest = JSON.parse(fs.readFileSync('package.json', 'utf8'))
     for (const name of ['@deepseek-ai/dsh-scope', '@deepseek-ai/dsh-tool-subagent']) {
       expect(manifest.dependencies).not.toHaveProperty(name)
-      expect(manifest.peerDependencies).toHaveProperty(name, '0.1.2-alpha.4')
+      expect(manifest.peerDependencies).toHaveProperty(name, DSH_RANGE)
       expect(manifest.devDependencies).toHaveProperty(name, '0.1.2-alpha.4')
     }
   })

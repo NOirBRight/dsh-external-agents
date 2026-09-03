@@ -13,6 +13,7 @@ import {
 const provenance = readFixtureProvenance()
 const rootManifest = JSON.parse(readFileSync(fixturePath('package.json'), 'utf8'))
 const artifactRecords = new Map(provenance.artifacts.map(record => [record.path, record]))
+const DSH_RANGE = '>=0.1.2-alpha.4 <1.0.0 || 0.1.2-alpha.5 || 0.1.2-rc.1'
 
 describe('official DSH fixture closure', () => {
   it('matches every archive to a checked-in digest and package identity', () => {
@@ -51,12 +52,12 @@ describe('official DSH fixture closure', () => {
     )
   })
 
-  it('keeps the plugin release and DSH pins exact', () => {
-    expect(rootManifest.version).toBe('0.2.2')
+  it('keeps the plugin release and dual-runtime DSH ranges', () => {
+    expect(rootManifest.version).toBe('0.2.3')
     for (const section of ['dependencies', 'peerDependencies']) {
       for (const [name, version] of Object.entries(rootManifest[section] ?? {})) {
         if (name.startsWith('@deepseek-ai/dsh-')) {
-          expect(['0.1.2-alpha.4', '^0.1.2-alpha.4']).toContain(version)
+          expect(version).toBe(DSH_RANGE)
         }
       }
     }

@@ -24,6 +24,7 @@ import { startOfficialProbes } from './probe.ts'
 import { registerRoutingSkill } from './routing-skill.ts'
 import { registerExternalAgentsRpc } from './rpc.ts'
 import { mergeConfig, resolveConfig } from './config-codec.ts'
+import { allowDshRuntime } from './compatibility.ts'
 import { dshHome, loadPersistedConfig, loadPersistedProbes, savePersistedProbes } from './store.ts'
 
 export { ADAPTERS, ADAPTER_IDS, GENERIC_TOOL_NAME, OFFICIAL_ADAPTER_IDS } from './catalog.ts'
@@ -128,6 +129,8 @@ async function mountPlugin(scope: Scope, plugin: Plugin, config: Record<string, 
  * subprocess capability, no model-visible delegation tools are registered.
  */
 export async function apply(ctx: Context, config: Config): Promise<void> {
+  if (!allowDshRuntime(ctx.logger, 'dsh-external-agents', ['@deepseek-ai/dsh-agent'])) return
+
   const home = dshHome()
   const initial = resolveConfig(mergeConfig(config, loadPersistedConfig(home)))
   let live = initial
