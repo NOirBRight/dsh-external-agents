@@ -12,7 +12,7 @@ Exposure 和 Default Adapter 由设置页拥有。Control Plane 在宿主平面�
 
 设置分区是独立的 `settings.section`（「外部 Agent」/ External Agents），不是「插件配置」里的一张杂项卡。
 
-写入以本插件 host RPC 为准。第三方插件的 settings 命名空间不一定能进 api-proxy 白名单；命名空间能暴露就当镜像，不能暴露也不挡保存。
+编辑先留在设置页草稿中，用户明确点击「保存」后才通过本插件 host RPC 写入，并显示成功或失败反馈。停用当前 Default Adapter 时清除该默认项，不静默替用户写入另一项；未设置默认项时，通用 `delegate_worker` 沿用既有规则，路由到第一个已启用 Adapter。第三方插件的 settings 命名空间不一定能进 api-proxy 白名单；命名空间能暴露就当镜像，不能暴露也不挡保存。
 
 ## 理由
 

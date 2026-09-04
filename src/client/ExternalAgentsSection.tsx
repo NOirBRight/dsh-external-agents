@@ -106,6 +106,17 @@ const inUseBadge: CSSProperties = {
 }
 const foot: CSSProperties = { display: 'flex', flexDirection: 'column', gap: 10, padding: '4px 16px 16px' }
 const meta: CSSProperties = { fontSize: 13, lineHeight: '20px', color: 'var(--dsw-alias-label-tertiary)' }
+const actionButton: CSSProperties = {
+  height: 32,
+  padding: '0 12px',
+  border: '1px solid var(--dsw-alias-border-l2)',
+  borderRadius: 24,
+  background: 'transparent',
+  color: 'inherit',
+  fontSize: 13,
+  fontWeight: 500,
+  cursor: 'pointer',
+}
 
 function BrandIcon({ id }: { id: AdapterId }): JSX.Element {
   const box = { width: 28, height: 28, viewBox: '0 0 24 24', 'aria-hidden': true as const }
@@ -287,7 +298,7 @@ function AdapterCard(props: {
   inUse: boolean
   t: ExternalAgentsFace['t']
   onPickDefault: () => void
-  onChange: (next: AdapterConfig, persist: boolean) => void
+  onChange: (next: AdapterConfig) => void
   onLocate: () => void
 }): JSX.Element {
   const { card, row, probe, inUse, t, onPickDefault, onChange, onLocate } = props
@@ -314,7 +325,7 @@ function AdapterCard(props: {
           type='checkbox'
           checked={enabled}
           aria-label={(enabled ? t('disableAdapter') : t('enableAdapter')) + ': ' + card.displayName}
-          onChange={() => onChange({ ...row, enabled: !enabled }, true)}
+          onChange={() => onChange({ ...row, enabled: !enabled })}
         />
         {enabled ? t('enabledBadge') : t('disabledBadge')}
       </label>
@@ -346,7 +357,7 @@ function AdapterCard(props: {
               const next = { ...row }
               if (value === '') delete next.model
               else next.model = value
-              onChange(next, true)
+              onChange(next)
             }}
           />
         )}
@@ -361,6 +372,7 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
   const [draft, setDraft] = useState<Config>({})
   const [probes, setProbes] = useState<Partial<Record<AdapterId, AdapterProbe>>>({})
   const [probing, setProbing] = useState(true)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
   const [error, setError] = useState<string | undefined>(undefined)
   const loadRef = useRef(load)
   const probeRef = useRef(probe)
@@ -395,13 +407,28 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
     return () => { cancelled = true }
   }, [])
 
-  const persist = (next: Config): void => {
+  const updateDraft = (next: Config): void => {
     setDraft(next)
-    void save(next).catch((cause: unknown) => setError(String(cause)))
+    setSaveStatus('idle')
+    setError(undefined)
+  }
+
+  const persist = (): void => {
+    const next = { ...draft }
+    if (next.defaultAdapter !== undefined && next.adapters?.[next.defaultAdapter]?.enabled !== true) {
+      delete next.defaultAdapter
+    }
+    setDraft(next)
+    setSaveStatus('saving')
+    setError(undefined)
+    void save(next).then(() => setSaveStatus('saved')).catch((cause: unknown) => {
+      setSaveStatus('idle')
+      setError(t('failed') + ': ' + String(cause))
+    })
   }
 
   const setAdapter = (id: AdapterId, row: AdapterConfig): void => {
-    persist({ ...draft, adapters: { ...draft.adapters, [id]: row } })
+    updateDraft({ ...draft, adapters: { ...draft.adapters, [id]: row } })
   }
 
   const locate = (id: AdapterId): void => {
@@ -429,19 +456,24 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
               setProbing(false)
             })
           }}
-          style={{
-            height: 32,
-            padding: '0 12px',
-            border: '1px solid var(--dsw-alias-border-l2)',
-            borderRadius: 24,
-            background: 'transparent',
-            color: 'inherit',
-            fontSize: 13,
-            fontWeight: 500,
-            cursor: 'pointer',
-          }}
+          style={actionButton}
         >
           {t('refresh')}
+        </button>
+        <button
+          type='button'
+          aria-label={t('save')}
+          disabled={snapshot === undefined || saveStatus === 'saving'}
+          onClick={persist}
+          style={{
+            ...actionButton,
+            background: 'var(--dsw-alias-label-primary)',
+            color: 'var(--dsw-alias-bg-layer-3)',
+            cursor: snapshot === undefined || saveStatus === 'saving' ? 'default' : 'pointer',
+            opacity: snapshot === undefined || saveStatus === 'saving' ? 0.6 : 1,
+          }}
+        >
+          {t('save')}
         </button>
       </div>
       <p style={introStyle}>{t('sectionIntro')}</p>
@@ -459,13 +491,14 @@ export function ExternalAgentsSection(props: ExternalAgentsSectionProps): JSX.El
               probe={probes[card.id]}
               inUse={draft.defaultAdapter === card.id && draft.adapters?.[card.id]?.enabled === true}
               t={t}
-              onPickDefault={() => persist({ ...draft, defaultAdapter: card.id })}
+              onPickDefault={() => updateDraft({ ...draft, defaultAdapter: card.id })}
               onChange={(row) => setAdapter(card.id, row)}
               onLocate={() => locate(card.id)}
             />
           ))}
         </ul>
       )}
+      {saveStatus === 'saved' ? <p style={introStyle} role='status'>{t('saved')}</p> : null}
       {error !== undefined ? <p style={{ ...introStyle, color: 'var(--dsw-alias-state-error-primary)' }} role='alert'>{error}</p> : null}
     </div>
   )

@@ -53,7 +53,7 @@ describe('official DSH fixture closure', () => {
   })
 
   it('keeps the plugin release and dual-runtime DSH ranges', () => {
-    expect(rootManifest.version).toBe('0.2.3')
+    expect(rootManifest.version).toBe('0.2.4')
     for (const section of ['dependencies', 'peerDependencies']) {
       for (const [name, version] of Object.entries(rootManifest[section] ?? {})) {
         if (name.startsWith('@deepseek-ai/dsh-')) {

@@ -110,9 +110,13 @@ export function createExternalAgentsRpcHandler(deps: ExternalAgentsRpcDeps): Con
     if (endpoint === SAVE_ENDPOINT) {
       const decoded = decodeConfig(payload)
       if (decoded === undefined) return fail('invalid external-agents config')
+      const candidate = { ...(payload as Record<string, unknown>) }
+      if (decoded.defaultAdapter !== undefined && decoded.adapters?.[decoded.defaultAdapter]?.enabled !== true) {
+        delete candidate.defaultAdapter
+      }
       let next: Config
       try {
-        next = resolveConfig(payload)
+        next = resolveConfig(candidate)
         resolveExposure(next)
       } catch (error: unknown) {
         return fail('invalid external-agents config: ' + errorText(error))

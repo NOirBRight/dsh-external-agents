@@ -68,6 +68,31 @@ describe('External Agents RPC', () => {
     expect(applyConfig).toHaveBeenCalledWith({ adapters: { cursor: { enabled: true, model: 'cursor-model' } } })
   })
 
+  it('clears a disabled Default Adapter before applying and persisting', async () => {
+    const applyConfig = vi.fn(async () => undefined)
+    const result = await createExternalAgentsRpcHandler(deps({ applyConfig }))(
+      SAVE_ENDPOINT,
+      {
+        adapters: {
+          codex: { enabled: false, model: 'codex-model' },
+          cursor: { enabled: true, model: 'cursor-model' },
+        },
+        defaultAdapter: 'codex',
+      },
+      new AbortController().signal,
+    )
+
+    const expected = {
+      adapters: {
+        codex: { enabled: false, model: 'codex-model' },
+        cursor: { enabled: true, model: 'cursor-model' },
+      },
+    }
+    expect(result).toMatchObject({ ok: true, value: { saved: true } })
+    expect(applyConfig).toHaveBeenCalledWith(expected)
+    expect(storeState.savePersistedConfig).toHaveBeenCalledWith(expect.any(String), expected)
+  })
+
   it('does not persist when remount fails', async () => {
     const applyConfig = vi.fn(async () => { throw new Error('mount rejected') })
     const result = await createExternalAgentsRpcHandler(deps({ applyConfig }))(
