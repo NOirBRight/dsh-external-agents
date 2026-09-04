@@ -103,7 +103,7 @@ dsh plugin --profile web add --force \
 
 ~~~sh
 dsh plugin --profile web add --force \
-  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/dsh-external-agents.tgz
+  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.5/dsh-external-agents-0.2.5.tgz
 ~~~
 
 更新、卸载与验证：
@@ -121,6 +121,6 @@ dsh plugin --profile web remove dsh-external-agents
 
 配置入口：Web 使用「设置」中的本插件页面；Host-only 插件使用 profile 的 dsh.profile.bundles 配置。先复制本 README 的最小 YAML/JSON 示例，再填写凭据或后端地址。
 
-回滚：重新执行固定版本 v0.2.1 命令，确认插件列表后只重启一次 Web 服务。失败时查看 journalctl --user -u dsh-web.service 与 dsh plugin --profile web doctor，不要把源码 checkout 写入 production profile。
+回滚：重新执行固定版本 v0.2.4 命令，确认插件列表后只重启一次 Web 服务。失败时查看 journalctl --user -u dsh-web.service 与 dsh plugin --profile web doctor，不要把源码 checkout 写入 production profile。
 
-Release 与完整性：[v0.2.3](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.3) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/SHA256SUMS)。
+Release 与完整性：[v0.2.5](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.5) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.5/SHA256SUMS)。

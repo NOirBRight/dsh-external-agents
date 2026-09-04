@@ -103,7 +103,7 @@ Fixed-version installation:
 
 ~~~sh
 dsh plugin --profile web add --force \
-  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/dsh-external-agents.tgz
+  https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.5/dsh-external-agents-0.2.5.tgz
 ~~~
 
 Update, uninstall, and verify:
@@ -121,6 +121,6 @@ dsh plugin --profile web remove dsh-external-agents
 
 Configuration: use the plugin section in Settings for Web UI plugins, or the profile dsh.profile.bundles entry for Host-only plugins. Start with this README's minimal YAML/JSON example and provide credentials/backend addresses explicitly.
 
-Rollback: rerun the fixed v0.2.1 command, verify the profile list, then restart the Web service once. Inspect journalctl --user -u dsh-web.service and dsh plugin --profile web doctor; never put a source checkout in the production profile.
+Rollback: rerun the fixed v0.2.4 command, verify the profile list, then restart the Web service once. Inspect journalctl --user -u dsh-web.service and dsh plugin --profile web doctor; never put a source checkout in the production profile.
 
-Release and integrity: [v0.2.3](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.3) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.3/SHA256SUMS).
+Release and integrity: [v0.2.5](https://github.com/NOirBRight/dsh-external-agents/releases/tag/v0.2.5) · [SHA256SUMS](https://github.com/NOirBRight/dsh-external-agents/releases/download/v0.2.5/SHA256SUMS).

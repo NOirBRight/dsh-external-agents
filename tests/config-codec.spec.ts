@@ -30,6 +30,29 @@ describe('mergeConfig', () => {
       },
     })
   })
+
+  it('drops yaml defaultAdapter when persisted settings disable it', () => {
+    expect(mergeConfig(
+      {
+        adapters: {
+          codex: { enabled: true, model: 'gpt-5.6-luna' },
+          cursor: { enabled: true, model: 'auto' },
+        },
+        defaultAdapter: 'codex',
+      },
+      {
+        adapters: {
+          codex: { enabled: false },
+          cursor: { enabled: false },
+        },
+      },
+    )).toEqual({
+      adapters: {
+        codex: { enabled: false, model: 'gpt-5.6-luna', env: {} },
+        cursor: { enabled: false, model: 'auto', env: {} },
+      },
+    })
+  })
 })
 
 describe('Config schema', () => {

@@ -152,6 +152,6 @@ export function mergeConfig(base: Config, overlay: Config | undefined): Config {
   const defaultAdapter = overlay.defaultAdapter ?? base.defaultAdapter
   return {
     adapters,
-    ...defaultAdapter !== undefined ? { defaultAdapter } : {},
+    ...defaultAdapter !== undefined && adapters[defaultAdapter]?.enabled === true ? { defaultAdapter } : {},
   }
 }
